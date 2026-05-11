@@ -21,15 +21,26 @@ public class BabyBehavior : MonoBehaviour
     public float timeScale = 1.0f; 
 
     private BabyAnimator babyAnim;
+    private BabyAudioCue babyAudio;
+    private BabyDisease babyDisease;
 
     private void Start()
     {
         babyAnim = GetComponent<BabyAnimator>();
+        babyAudio = GetComponent<BabyAudioCue>();
+        babyDisease = GetComponent<BabyDisease>();
+
+        if (babyAnim == null)
+            Debug.LogError("[BabyBehavior] BabyAnimator component tidak ditemukan!");
+        if (babyAudio == null)
+            Debug.LogWarning("[BabyBehavior] BabyAudioCue component tidak ditemukan!");
+        if (babyDisease == null)
+            Debug.LogWarning("[BabyBehavior] BabyDisease component tidak ditemukan!");
     }
 
     private void Update()
     {
-        if (GameManager.Instance.currentState != GameManager.GameState.Playing) return;
+        if (GameManager.Instance == null || GameManager.Instance.currentState != GameManager.GameState.Playing) return;
 
         UpdateStatus();
         EvaluateState();
@@ -61,10 +72,16 @@ public class BabyBehavior : MonoBehaviour
         else
             currentState = BabyState.Normal;
 
-        // Update animasi hanya jika state berubah
+        // Update animasi dan audio hanya jika state berubah
         if (currentState != previousState)
         {
             babyAnim.UpdateAnimatorState(currentState);
+            
+            // Trigger audio untuk state tertentu
+            if (currentState == BabyState.Crying && babyAudio != null)
+            {
+                babyAudio.PlayCry(previousState); // Play cry berdasarkan state sebelumnya
+            }
         }
     }
 
@@ -91,6 +108,13 @@ public class BabyBehavior : MonoBehaviour
     public void GiveMedicine()
     {
         temperature = 36.5f;
-        Debug.Log("Pemain memberikan obat penurun panas.");
+        
+        // Cure disease jika ada
+        if (babyDisease != null)
+        {
+            babyDisease.CureDisease();
+        }
+        
+        Debug.Log("Pemain memberikan obat penurun panas dan menyembuhkan penyakit.");
     }
 }
