@@ -1,0 +1,91 @@
+{
+  "symptoms": [
+    {
+      "id": "pilek",
+      "displayName": "Pilek",
+      "description": "Hidung tersumbat dan berair",
+      "severity": 25,
+      "visualEffect": "RunnyNose",
+      "audioEffect": "SneezingSound",
+      "isVisible": true
+    },
+    {
+      "id": "batuk",
+      "displayName": "Batuk",
+      "description": "Batuk ringan atau kering",
+      "severity": 30,
+      "visualEffect": "CoughingAnimation",
+      "audioEffect": "CoughSound",
+      "isVisible": true
+    },
+    {
+      "id": "batuk_berdahak",
+      "displayName": "Batuk Berdahak",
+      "description": "Batuk dengan dahak yang berat",
+      "severity": 50,
+      "visualEffect": "CoughingAnimation",
+      "audioEffect": "WetCoughSound",
+      "isVisible": true
+    },
+    {
+      "id": "sesak_nafas",
+      "displayName": "Sesak Nafas",
+      "description": "Kesulitan bernafas dan napas pendek",
+      "severity": 60,
+      "visualEffect": "BreathingStruggles",
+      "audioEffect": "WheezeSound",
+      "isVisible": true
+    },
+    {
+      "id": "demam",
+      "displayName": "Demam",
+      "description": "Suhu tubuh meningkat",
+      "severity": 55,
+      "visualEffect": "FeverEffect",
+      "audioEffect": "",
+      "isVisible": true
+    },
+    {
+      "id": "pucat",
+      "displayName": "Pucat",
+      "description": "Wajah pucat dan tidak sehat",
+      "severity": 70,
+      "visualEffect": "PaleEffect",
+      "audioEffect": "",
+      "isVisible": true
+    },
+    {
+      "id": "dada_cekung",
+      "displayName": "Dada Cekung",
+      "description": "Dada tampak cekung ketika bernafas",
+      "severity": 85,
+      "visualEffect": "ChestRetractionAnimation",
+      "audioEffect": "",
+      "isVisible": true
+    }
+  ],
+  "diseases": [
+    {
+      "id": "common_cold",
+      "displayName": "Pilek Biasa",
+      "description": "Penyakit ringan yang umum terjadi pada bayi. Biasanya sembuh dalam waktu singkat.",
+      "symptomIds": ["pilek", "batuk"],
+      "minSeverity": 30,
+      "maxSeverity": 60,
+      "duration": 120,
+      "probability": 0.7,
+      "pneumoniaProgression": 0.3
+    },
+    {
+      "id": "pneumonia",
+      "displayName": "Pneumonia",
+      "description": "Penyakit serius yang memerlukan perhatian medis. Ditandai dengan gejala parah.",
+      "symptomIds": ["pilek", "sesak_nafas", "batuk_berdahak", "demam", "pucat", "dada_cekung"],
+      "minSeverity": 60,
+      "maxSeverity": 100,
+      "duration": 300,
+      "probability": 0.3,
+      "pneumoniaProgression": 0
+    }
+  ]
+}
