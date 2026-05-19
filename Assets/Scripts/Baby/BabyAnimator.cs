@@ -44,27 +44,32 @@ public class BabyAnimator : MonoBehaviour
 
     public void UpdateAnimatorState(BabyBehavior.BabyState state)
     {
-        // Reset semua trigger animasi terlebih dahulu
+        // Reset semua animator states terlebih dahulu
         animator.SetBool("isCrying", false);
         animator.SetBool("isFever", false);
-        animator.SetBool("isWheeling", false); // Sesak nafas
+        animator.SetBool("isWheeling", false);      // Sesak nafas (wheezing)
+        animator.SetBool("isCoughing", false);      // Batuk (cough)
+        animator.SetBool("isFastBreathing", false); // Napas cepat (fast breath)
+        animator.SetBool("isRewel", false);         // Gelisah/rewel (restless)
         SetFaceExpression(0f); // Reset wajah ke normal
 
         switch (state)
         {
             case BabyBehavior.BabyState.Normal:
-                animator.Play("Idle_Sleep"); // Asumsi nama klip animasi Anda
+                animator.Play("Idle_Sleep"); // Normal breath - idle default
                 StopVFX(cryingTearsVFX);
                 StopVFX(feverSweatVFX);
                 break;
 
             case BabyBehavior.BabyState.Lapar:
             case BabyBehavior.BabyState.TidakNyaman:
+                animator.SetBool("isRewel", true); // Gelisah/rewel ketika lapar atau tidak nyaman
                 animator.Play("Restless_Moving");
                 break;
 
             case BabyBehavior.BabyState.Demam:
                 animator.SetBool("isFever", true);
+                animator.SetBool("isFastBreathing", true); // Napas cepat saat demam
                 PlayVFX(feverSweatVFX);
                 break;
 
@@ -74,7 +79,6 @@ public class BabyAnimator : MonoBehaviour
                 PlayVFX(cryingTearsVFX);
                 break;
         }
-
     }
 
     private void UpdateDiseaseVisuals()
@@ -86,7 +90,9 @@ public class BabyAnimator : MonoBehaviour
             {
                 bodyRenderer.material = babyNormalMaterial;
             }
-            animator.SetBool("isWheeling", false); // Reset wheeling state
+            animator.SetBool("isWheeling", false);      // Reset wheeling state
+            animator.SetBool("isCoughing", false);      // Reset coughing state
+            animator.SetBool("isFastBreathing", false); // Reset fast breathing state
             ResetChestIndentation();
             ResetWheezingExpression();
             return;
@@ -103,16 +109,29 @@ public class BabyAnimator : MonoBehaviour
             }
         }
 
-        // SESAK NAFAS - Dada cekung + ekspresi wajah
+        // BATUK - Trigger coughing animation
+        if (babyDisease.HasSymptom(BabyDisease.Symptom.Batuk) || 
+            babyDisease.HasSymptom(BabyDisease.Symptom.BatukBerdahak))
+        {
+            animator.SetBool("isCoughing", true);
+        }
+        else
+        {
+            animator.SetBool("isCoughing", false);
+        }
+
+        // SESAK NAFAS - Dada cekung + ekspresi wajah + napas cepat
         if (babyDisease.HasSymptom(BabyDisease.Symptom.SesakNafas))
         {
             animator.SetBool("isWheeling", true);
+            animator.SetBool("isFastBreathing", true); // Napas cepat saat sesak nafas
             SetChestIndentation(Mathf.Clamp(severity * 0.5f, 0f, 100f));
             SetWheezingExpression(Mathf.Clamp(severity * 0.3f, 0f, 100f));
         }
         else
         {
             animator.SetBool("isWheeling", false);
+            animator.SetBool("isFastBreathing", false);
         }
 
         // FACIAL EXPRESSIONS untuk penyakit (pucat/sakit)

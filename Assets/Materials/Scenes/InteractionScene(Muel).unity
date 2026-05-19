@@ -14359,6 +14359,109 @@ Transform:
   - {fileID: 2066042664}
   m_Father: {fileID: 1733720357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1553767284
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1553767289}
+  - component: {fileID: 1553767288}
+  - component: {fileID: 1553767287}
+  - component: {fileID: 1553767286}
+  - component: {fileID: 1553767285}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1553767285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553767284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ded3ddda593b6c4bb80a84450955c05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SymptomDatabaseLoader
+  jsonFileName: symptom_database.json
+  loadFromStreamingAssets: 1
+  validateOnLoad: 1
+--- !u!114 &1553767286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553767284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 621c8ef142961674e88f3c9db68e4783, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveLoadManager
+--- !u!114 &1553767287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553767284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a04c67a441ba294d9fbe23068e75ca1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  currentPhase: 0
+  currentState: 0
+  currentDay: 1
+  neonatalPhaseDays: 7
+  toddlerPhaseDays: 7
+  babyBehavior: {fileID: 0}
+--- !u!114 &1553767288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553767284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d3548d52367234ea1786aa576e7ba9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DiagnosisValidator
+  falsePositivePenalty: 0.1
+  missedSymptomPenalty: 0.15
+  perfectThreshold: 90
+  goodThreshold: 70
+  fairThreshold: 50
+  poorThreshold: 20
+  babyDisease: {fileID: 5839998302148702331}
+  babyBehavior: {fileID: 5839998302148702326}
+  onDiagnosisSubmitted:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1553767289
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553767284}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1555687090
 GameObject:
   m_ObjectHideFlags: 0
@@ -17600,6 +17703,63 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7939995439548375709, guid: 8d0b0f2cf97398c4daae2748aeb426c6, type: 3}
   m_PrefabInstance: {fileID: 2113262487}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1876759958
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_Name
+      value: XR Device Simulator
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
 --- !u!1 &1878104773
 GameObject:
   m_ObjectHideFlags: 0
@@ -38322,7 +38482,7 @@ Transform:
   m_GameObject: {fileID: 3472778375850074604}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 39.51, y: 77.85, z: -7.42}
+  m_LocalPosition: {x: 39.9, y: 77.85, z: -7.42}
   m_LocalScale: {x: 978.31946, y: 978.31946, z: 978.31946}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -43741,7 +43901,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 1
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -44179,6 +44339,12 @@ GameObject:
   - component: {fileID: 3083957300324160799}
   - component: {fileID: 4096623696893263272}
   - component: {fileID: 5839998302148702325}
+  - component: {fileID: 5839998302148702326}
+  - component: {fileID: 5839998302148702331}
+  - component: {fileID: 5839998302148702330}
+  - component: {fileID: 5839998302148702329}
+  - component: {fileID: 5839998302148702328}
+  - component: {fileID: 5839998302148702327}
   m_Layer: 3
   m_Name: Baby Mesh
   m_TagString: Untagged
@@ -44207,6 +44373,220 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.010307618, y: 0.013090548, z: 0.018989066}
   m_Center: {x: -0.00017451272, y: -0.0007166194, z: 0.0022979598}
+--- !u!114 &5839998302148702326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9345dbe5511f9b64f9f9f4f617e9e484, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyBehavior
+  currentState: 0
+  hunger: 100
+  comfort: 100
+  temperature: 36.5
+  thresholdNormal: 40
+  feverThreshold: 37.5
+  criticalThreshold: 15
+  timeScale: 1
+--- !u!114 &5839998302148702327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b089426fda147441bc28ac7a7930e97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyAudioCue
+  normalCryClip: {fileID: 0}
+  hungryCryClip: {fileID: 0}
+  uncomfortableCryClip: {fileID: 0}
+  sneezeClip: {fileID: 0}
+  coughClip: {fileID: 0}
+  coughWithPhlegmClip: {fileID: 0}
+  wheezingClip: {fileID: 0}
+  cryVolume: 0.8
+  diseaseAudioVolume: 0.6
+  pitchVariation: 0.5
+  coughInterval: 5
+  sneezeInterval: 8
+  wheezingInterval: 3
+--- !u!82 &5839998302148702328
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &5839998302148702329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef044026b9ab054b9c31cf142303810, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyAnimator
+  cryingTearsVFX: {fileID: 0}
+  feverSweatVFX: {fileID: 0}
+  babyFaceRenderer: {fileID: 0}
+  cryingBlendshapeIndex: 1
+  puledBlendshapeIndex: 2
+  wheezingBlendshapeIndex: 3
+  bodyRenderer: {fileID: 0}
+  chestRenderer: {fileID: 0}
+  chestCavityBlendshapeIndex: 0
+  babyNormalMaterial: {fileID: 0}
+  paleSkinColor: {r: 0.95, g: 0.93, b: 0.93, a: 1}
+--- !u!95 &5839998302148702330
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5839998302148702331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839998302148702324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29176dac5cb8c1d429a899ca92af8e0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyDisease
+  currentDisease:
+    type: 0
+    severityLevel: 0
+    symptoms: 
+    duration: 300
+    elapsedTime: 0
+  diseaseChancePerUpdate: 0.001
+  commonColdDuration: 120
+  commonColdMinSeverity: 30
+  commonColdMaxSeverity: 60
+  pneumoniaDuration: 300
+  pneumoniaMinSeverity: 60
+  pneumoniaMaxSeverity: 100
+  pneumoniaChance: 0.3
+  useSymptomDatabase: 1
 --- !u!33 &5855673143826446449
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -54634,7 +55014,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 1
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -59154,3 +59534,5 @@ SceneRoots:
   - {fileID: 1151287905}
   - {fileID: 543450653612691530}
   - {fileID: 1446958063}
+  - {fileID: 1553767289}
+  - {fileID: 1876759958}

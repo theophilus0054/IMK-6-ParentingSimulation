@@ -34,13 +34,13 @@ Semua scripts sudah **implementable** tapi memerlukan setup di Unity Editor.
 ## 🔧 SETUP CHECKLIST - STEP BY STEP
 
 ### STEP 1: Scene Setup
-- [ ] Create new scene atau setup di existing scene
-- [ ] Create empty GameObject: **"GameManager"**
-  - [ ] Add component: **GameManager.cs**
-  - [ ] Add component: **SaveLoadManager.cs**
-  - [ ] Add component: **SymptomDatabaseLoader.cs**
-  - [ ] Add component: **DiagnosisValidator.cs**
-  - [ ] Make it **DontDestroyOnLoad** (opsional)
+- [x] Create new scene atau setup di existing scene
+- [x] Create empty GameObject: **"GameManager"**
+  - [x] Add component: **GameManager.cs**
+  - [x] Add component: **SaveLoadManager.cs**
+  - [x] Add component: **SymptomDatabaseLoader.cs**
+  - [x] Add component: **DiagnosisValidator.cs**
+  - [x] Make it **DontDestroyOnLoad** (opsional)
 
 ### STEP 2: Baby GameObject Setup
 - [ ] Create new GameObject: **"Baby"**
