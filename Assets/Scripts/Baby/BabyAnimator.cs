@@ -4,211 +4,129 @@ using UnityEngine;
 public class BabyAnimator : MonoBehaviour
 {
     private Animator animator;
-    private BabyDisease babyDisease;
     private BabyBehavior babyBehavior;
+    private string currentAnimationState;
     
-    [Header("Visual Effects")]
-    public ParticleSystem cryingTearsVFX; // Partikel Air Mata 
-    public ParticleSystem feverSweatVFX; 
-
-    [Header("Facial Expressions (SkinnedMeshRenderer)")]
-    public SkinnedMeshRenderer babyFaceRenderer;
-    // Index blendshape biasanya didapat dari Blender (contoh: 0 = Senyum, 1 = Sedih/Menangis)
-    public int cryingBlendshapeIndex = 1;
-    public int puledBlendshapeIndex = 2; // Untuk ekspresi pucat/sakit
-    public int wheezingBlendshapeIndex = 3; // Untuk ekspresi sesak nafas
-
-    [Header("Disease Visual Effects")]
-    public SkinnedMeshRenderer bodyRenderer; // Untuk perubahan warna kulit (paleness)
-    public SkinnedMeshRenderer chestRenderer; // Untuk chest indentation
-    public int chestCavityBlendshapeIndex = 0; // Dada cekung
+    private BabyBehavior.DiseaseState lastLoggedDisease = BabyBehavior.DiseaseState.None;
     
-    [Header("Material Colors")]
-    public Material babyNormalMaterial; // Material kulit normal
-    private Material babyPaleMaterial; // Material kulit pucat (akan di-instantiate)
-    public Color paleSkinColor = new Color(0.95f, 0.93f, 0.93f, 1f); // Warna pucat 
+    [Header("Effect Objects")]
+    public GameObject thermometerObject;
+    public GameObject oximeterObject;
+    public ParticleSystem greenYellowParticle;
+
+    [Header("Animator State Names")]
+    [SerializeField] private string layBreathState = "Lay breath";
+    [SerializeField] private string rewelState = "Rewel";
+    [SerializeField] private string coughState = "Cough";
+    [SerializeField] private string fastBreathState = "Fast breath";
+    [SerializeField] private string cryingState = "Crying";
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
-        babyDisease = GetComponent<BabyDisease>();
         babyBehavior = GetComponent<BabyBehavior>();
-
-        // Create a copy of the material for color modification
-        if (babyNormalMaterial != null)
-        {
-            babyPaleMaterial = new Material(babyNormalMaterial);
-            babyPaleMaterial.color = paleSkinColor;
-        }
     }
 
-    public void UpdateAnimatorState(BabyBehavior.BabyState state)
+    public void PlayAnimationState(string stateName)
     {
-        // Reset semua animator states terlebih dahulu
-        animator.SetBool("isCrying", false);
-        animator.SetBool("isFever", false);
-        animator.SetBool("isWheeling", false);      // Sesak nafas (wheezing)
-        animator.SetBool("isCoughing", false);      // Batuk (cough)
-        animator.SetBool("isFastBreathing", false); // Napas cepat (fast breath)
-        animator.SetBool("isRewel", false);         // Gelisah/rewel (restless)
-        SetFaceExpression(0f); // Reset wajah ke normal
-
-        switch (state)
+        if (animator == null)
         {
-            case BabyBehavior.BabyState.Normal:
-                animator.Play("Idle_Sleep"); // Normal breath - idle default
-                StopVFX(cryingTearsVFX);
-                StopVFX(feverSweatVFX);
-                break;
-
-            case BabyBehavior.BabyState.Lapar:
-            case BabyBehavior.BabyState.TidakNyaman:
-                animator.SetBool("isRewel", true); // Gelisah/rewel ketika lapar atau tidak nyaman
-                animator.Play("Restless_Moving");
-                break;
-
-            case BabyBehavior.BabyState.Demam:
-                animator.SetBool("isFever", true);
-                animator.SetBool("isFastBreathing", true); // Napas cepat saat demam
-                PlayVFX(feverSweatVFX);
-                break;
-
-            case BabyBehavior.BabyState.Crying:
-                animator.SetBool("isCrying", true);
-                SetFaceExpression(100f); // Set blendshape sedih/menangis ke maksimal
-                PlayVFX(cryingTearsVFX);
-                break;
-        }
-    }
-
-    private void UpdateDiseaseVisuals()
-    {
-        if (babyDisease == null || babyDisease.currentDisease.type == BabyDisease.DiseaseType.None)
-        {
-            // Reset to normal
-            if (bodyRenderer != null && babyNormalMaterial != null)
-            {
-                bodyRenderer.material = babyNormalMaterial;
-            }
-            animator.SetBool("isWheeling", false);      // Reset wheeling state
-            animator.SetBool("isCoughing", false);      // Reset coughing state
-            animator.SetBool("isFastBreathing", false); // Reset fast breathing state
-            ResetChestIndentation();
-            ResetWheezingExpression();
+            Debug.LogError("[ANIMATOR] Animator null!");
             return;
         }
 
-        float severity = babyDisease.GetSeverity();
-
-        // PUCAT - Perubahan warna kulit
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.Pucat) && bodyRenderer != null)
+        if (string.IsNullOrWhiteSpace(stateName))
         {
-            if (babyPaleMaterial != null)
+            Debug.LogError("[ANIMATOR] State name invalid!");
+            return;
+        }
+
+        if (currentAnimationState == stateName)
+        {
+            return; // Sama dengan sebelumnya, jangan repeat
+        }
+
+        Debug.Log($"<color=cyan>[ANIM] Playing: <b>{stateName}</b></color>");
+        animator.Play(stateName);
+        currentAnimationState = stateName;
+    }
+
+    private void UpdateVisuals()
+    {
+        if (babyBehavior == null) return;
+
+        // Log disease change
+        if (babyBehavior.currentDisease != lastLoggedDisease)
+        {
+            lastLoggedDisease = babyBehavior.currentDisease;
+            string symptomsStr = string.Join(", ", babyBehavior.activeSymptoms);
+            Debug.Log($"[VISUALS] Disease: {babyBehavior.currentDisease} | Symptoms: {symptomsStr}");
+        }
+
+        // Map symptoms ke animation
+        string animState = layBreathState; // Default
+
+        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
+        {
+            animState = fastBreathState;
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam))
+        {
+            animState = rewelState;
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak) || 
+                 babyBehavior.HasSymptom(BabyBehavior.Symptom.Batuk))
+        {
+            animState = coughState;
+        }
+        else if (babyBehavior.health < babyBehavior.criticalHealthThreshold)
+        {
+            animState = cryingState;
+        }
+
+        PlayAnimationState(animState);
+
+        // Map symptoms ke effects
+        bool hasPilek = babyBehavior.HasSymptom(BabyBehavior.Symptom.Pilek);
+        bool hasBatukBerdahak = babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak);
+        bool hasSesak = babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas);
+        bool hasDemam = babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam);
+
+        // Pilek/Batuk Berdahak → Green/Yellow Particle
+        if (hasPilek || hasBatukBerdahak)
+        {
+            if (greenYellowParticle != null && !greenYellowParticle.isPlaying)
             {
-                bodyRenderer.material = babyPaleMaterial;
+                greenYellowParticle.Play();
             }
+            SetEffectActive(greenYellowParticle?.gameObject, true);
+        }
+        else if (greenYellowParticle != null && greenYellowParticle.isPlaying)
+        {
+            greenYellowParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            SetEffectActive(greenYellowParticle.gameObject, false);
         }
 
-        // BATUK - Trigger coughing animation
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.Batuk) || 
-            babyDisease.HasSymptom(BabyDisease.Symptom.BatukBerdahak))
-        {
-            animator.SetBool("isCoughing", true);
-        }
-        else
-        {
-            animator.SetBool("isCoughing", false);
-        }
+        // Sesak Nafas → Oximeter ON
+        SetEffectActive(oximeterObject, hasSesak);
 
-        // SESAK NAFAS - Dada cekung + ekspresi wajah + napas cepat
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.SesakNafas))
-        {
-            animator.SetBool("isWheeling", true);
-            animator.SetBool("isFastBreathing", true); // Napas cepat saat sesak nafas
-            SetChestIndentation(Mathf.Clamp(severity * 0.5f, 0f, 100f));
-            SetWheezingExpression(Mathf.Clamp(severity * 0.3f, 0f, 100f));
-        }
-        else
-        {
-            animator.SetBool("isWheeling", false);
-            animator.SetBool("isFastBreathing", false);
-        }
-
-        // FACIAL EXPRESSIONS untuk penyakit (pucat/sakit)
-        if (severity > 50f && babyDisease.HasSymptom(BabyDisease.Symptom.Demam))
-        {
-            SetPuledExpression(Mathf.Clamp(severity * 0.5f, 0f, 100f));
-        }
+        // Demam → Thermometer ON
+        SetEffectActive(thermometerObject, hasDemam);
     }
 
-    private void SetFaceExpression(float weight)
+    private void SetEffectActive(GameObject target, bool isActive)
     {
-        if (babyFaceRenderer != null && babyFaceRenderer.sharedMesh.blendShapeCount > 0)
+        if (target == null) return;
+        
+        if (target.activeSelf != isActive)
         {
-            // Mengatur nilai blendshape wajah (0 - 100)
-            babyFaceRenderer.SetBlendShapeWeight(cryingBlendshapeIndex, weight);
-        }
-    }
-
-    private void SetPuledExpression(float weight)
-    {
-        if (babyFaceRenderer != null && babyFaceRenderer.sharedMesh.blendShapeCount > puledBlendshapeIndex)
-        {
-            babyFaceRenderer.SetBlendShapeWeight(puledBlendshapeIndex, weight);
-        }
-    }
-
-    private void SetWheezingExpression(float weight)
-    {
-        if (babyFaceRenderer != null && babyFaceRenderer.sharedMesh.blendShapeCount > wheezingBlendshapeIndex)
-        {
-            babyFaceRenderer.SetBlendShapeWeight(wheezingBlendshapeIndex, weight);
-        }
-    }
-
-    private void ResetWheezingExpression()
-    {
-        if (babyFaceRenderer != null && babyFaceRenderer.sharedMesh.blendShapeCount > wheezingBlendshapeIndex)
-        {
-            babyFaceRenderer.SetBlendShapeWeight(wheezingBlendshapeIndex, 0f);
-        }
-    }
-
-    private void SetChestIndentation(float weight)
-    {
-        if (chestRenderer != null && chestRenderer.sharedMesh.blendShapeCount > 0)
-        {
-            chestRenderer.SetBlendShapeWeight(chestCavityBlendshapeIndex, weight);
-        }
-    }
-
-    private void ResetChestIndentation()
-    {
-        if (chestRenderer != null && chestRenderer.sharedMesh.blendShapeCount > 0)
-        {
-            chestRenderer.SetBlendShapeWeight(chestCavityBlendshapeIndex, 0f);
-        }
-    }
-
-    private void PlayVFX(ParticleSystem vfx)
-    {
-        if (vfx != null && !vfx.isPlaying)
-        {
-            vfx.Play();
-        }
-    }
-
-    private void StopVFX(ParticleSystem vfx)
-    {
-        if (vfx != null && vfx.isPlaying)
-        {
-            vfx.Stop();
+            target.SetActive(isActive);
+            Debug.Log($"[EFFECT] {target.name}: {(isActive ? "<color=green>ON</color>" : "<color=red>OFF</color>")}");
         }
     }
 
     private void Update()
     {
-        // Update disease visuals setiap frame
-        UpdateDiseaseVisuals();
+        UpdateVisuals();
     }
 }
