@@ -9193,6 +9193,206 @@ MonoBehaviour:
     m_HintWeight: 1
     m_MaintainTargetPositionOffset: 0
     m_MaintainTargetRotationOffset: 0
+--- !u!1 &964741275 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_PrefabInstance: {fileID: 1077434600}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &964741276 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_PrefabInstance: {fileID: 1077434600}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &964741277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964741275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b089426fda147441bc28ac7a7930e97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyAudioCue
+  normalCryClip: {fileID: 0}
+  whimperingClip: {fileID: 8300000, guid: 0e568b899f6777946816195d3b40f8fb, type: 3}
+  coughClip: {fileID: 8300000, guid: e373c471dac385c4cb3208bfcedbe67a, type: 3}
+  wheezingClip: {fileID: 0}
+  audioVolume: 0.7
+  pitchVariation: 0.5
+--- !u!82 &964741279
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964741275}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &964741280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964741275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9345dbe5511f9b64f9f9f4f617e9e484, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyBehavior
+  health: 100
+  temperature: 36.5
+  oxygenLevel: 100
+  currentDisease: 0
+  activeSymptoms: 
+  diseaseElapsedTime: 0
+  diseaseProgressionChance: 0.1
+  feverThreshold: 37.5
+  lowOxygenThreshold: 40
+  criticalHealthThreshold: 20
+  timeScale: 1
+  healthDecayRate: 5
+  oxygenDecayRate: 10
+  commonColdDuration: 120
+  pneumoniaDuration: 300
+  cc_onset_pilek: 0
+  cc_onset_batuk: 5
+  pn_onset_pilek: 0
+  pn_onset_batuk_berdahak: 5
+  pn_onset_sesak: 15
+  diseaseChancePerSecond: 0.001
+--- !u!114 &964741281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964741275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef044026b9ab054b9c31cf142303810, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BabyAnimator
+  thermometerObject: {fileID: 7472798774016165111}
+  oximeterObject: {fileID: 2134197745}
+  greenYellowParticle: {fileID: 0}
+  layBreathState: Lay breath
+  rewelState: Rewel
+  coughState: Cough
+  fastBreathState: Fast breath
+  cryingState: Crying
+--- !u!95 &964741282
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964741275}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 447c9018b146f6d4dbe287be3a3783c7, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &966500681
 GameObject:
   m_ObjectHideFlags: 0
@@ -10135,6 +10335,130 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -4816795207920127434, guid: 8d0b0f2cf97398c4daae2748aeb426c6, type: 3}
   m_PrefabInstance: {fileID: 2113262487}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1077434600
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 543450653612691530}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 8.987818
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 8.987818
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 8.987818
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -41.84959
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 14.200751
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -6.395811
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.78340924
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.62150633
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 76.852
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_Name
+      value: Baby
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0006976611
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.000014324504
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.00041198736
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.6480457
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7498452
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.12946014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.031765793
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -101.452
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -37.242004
+      objectReference: {fileID: 0}
+    - target: {fileID: 4768339100228235574, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 50.399994
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 964741282}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 964741281}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 964741280}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 964741279}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 964741277}
+  m_SourcePrefab: {fileID: 100100000, guid: 24309f64599d616449bd42c0512fa536, type: 3}
 --- !u!1 &1086278672
 GameObject:
   m_ObjectHideFlags: 0
@@ -14420,9 +14744,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   currentPhase: 0
   currentState: 0
-  currentDay: 1
+  currentDay: 0
   neonatalPhaseDays: 7
-  toddlerPhaseDays: 7
   babyBehavior: {fileID: 0}
 --- !u!114 &1553767288
 MonoBehaviour:
@@ -14442,7 +14765,6 @@ MonoBehaviour:
   goodThreshold: 70
   fairThreshold: 50
   poorThreshold: 20
-  babyDisease: {fileID: 5839998302148702331}
   babyBehavior: {fileID: 5839998302148702326}
   onDiagnosisSubmitted:
     m_PersistentCalls:
@@ -22484,6 +22806,7 @@ Transform:
   m_LocalScale: {x: 0.02781543, y: 0.02781543, z: 0.02781543}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 964741276}
   - {fileID: 1187514422260380129}
   - {fileID: 6645823804653415824}
   - {fileID: 411533659060031661}
@@ -28889,7 +29212,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2120146538474153692
 Transform:
   m_ObjectHideFlags: 0
@@ -44385,14 +44708,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9345dbe5511f9b64f9f9f4f617e9e484, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BabyBehavior
-  currentState: 0
-  hunger: 100
-  comfort: 100
+  health: 100
   temperature: 36.5
-  thresholdNormal: 40
+  oxygenLevel: 100
+  currentDisease: 0
+  activeSymptoms: 
+  diseaseElapsedTime: 0
+  diseaseProgressionChance: 0.1
   feverThreshold: 37.5
-  criticalThreshold: 15
+  lowOxygenThreshold: 40
+  criticalHealthThreshold: 20
   timeScale: 1
+  healthDecayRate: 5
+  oxygenDecayRate: 10
+  commonColdDuration: 120
+  pneumoniaDuration: 300
+  cc_onset_pilek: 0
+  cc_onset_batuk: 10
+  pn_onset_pilek: 0
+  pn_onset_batuk_berdahak: 5
+  pn_onset_sesak: 15
+  diseaseChancePerSecond: 0.001
 --- !u!114 &5839998302148702327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44406,18 +44742,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BabyAudioCue
   normalCryClip: {fileID: 0}
-  hungryCryClip: {fileID: 0}
-  uncomfortableCryClip: {fileID: 0}
-  sneezeClip: {fileID: 0}
+  whimperingClip: {fileID: 0}
   coughClip: {fileID: 0}
-  coughWithPhlegmClip: {fileID: 0}
   wheezingClip: {fileID: 0}
-  cryVolume: 0.8
-  diseaseAudioVolume: 0.6
+  audioVolume: 0.7
   pitchVariation: 0.5
-  coughInterval: 5
-  sneezeInterval: 8
-  wheezingInterval: 3
 --- !u!82 &5839998302148702328
 AudioSource:
   m_ObjectHideFlags: 0
@@ -44527,17 +44856,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ef044026b9ab054b9c31cf142303810, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BabyAnimator
-  cryingTearsVFX: {fileID: 0}
-  feverSweatVFX: {fileID: 0}
-  babyFaceRenderer: {fileID: 0}
-  cryingBlendshapeIndex: 1
-  puledBlendshapeIndex: 2
-  wheezingBlendshapeIndex: 3
-  bodyRenderer: {fileID: 0}
-  chestRenderer: {fileID: 0}
-  chestCavityBlendshapeIndex: 0
-  babyNormalMaterial: {fileID: 0}
-  paleSkinColor: {r: 0.95, g: 0.93, b: 0.93, a: 1}
+  thermometerObject: {fileID: 0}
+  oximeterObject: {fileID: 0}
+  greenYellowParticle: {fileID: 0}
+  layBreathState: Lay breath
+  rewelState: Rewel
+  coughState: Cough
+  fastBreathState: Fast breath
+  cryingState: Crying
 --- !u!95 &5839998302148702330
 Animator:
   serializedVersion: 7
@@ -44587,6 +44913,8 @@ MonoBehaviour:
   pneumoniaMaxSeverity: 100
   pneumoniaChance: 0.3
   useSymptomDatabase: 1
+  babyBehavior: {fileID: 0}
+  symptomDatabase: {fileID: 0}
 --- !u!33 &5855673143826446449
 MeshFilter:
   m_ObjectHideFlags: 0
