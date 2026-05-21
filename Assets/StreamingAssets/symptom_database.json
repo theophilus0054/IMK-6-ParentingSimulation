@@ -3,63 +3,36 @@
     {
       "id": "pilek",
       "displayName": "Pilek",
-      "description": "Hidung tersumbat dan berair",
+      "description": "Hidung tersumbat dan berair. Menampilkan partikel hijau/kuning.",
       "severity": 25,
-      "visualEffect": "RunnyNose",
-      "audioEffect": "SneezingSound",
+      "visualEffect": "GreenYellowParticles",
+      "audioEffect": "",
       "isVisible": true
     },
     {
       "id": "batuk",
       "displayName": "Batuk",
-      "description": "Batuk ringan atau kering",
+      "description": "Batuk ringan atau kering. Memicu animasi Cough dan sound coughing.",
       "severity": 30,
-      "visualEffect": "CoughingAnimation",
+      "visualEffect": "CoughAnimation",
       "audioEffect": "CoughSound",
       "isVisible": true
     },
     {
       "id": "batuk_berdahak",
       "displayName": "Batuk Berdahak",
-      "description": "Batuk dengan dahak yang berat",
+      "description": "Batuk dengan dahak hijau atau kekuningan. Memicu animasi Cough, sound coughing, dan partikel hijau/kuning.",
       "severity": 50,
-      "visualEffect": "CoughingAnimation",
-      "audioEffect": "WetCoughSound",
+      "visualEffect": "CoughAnimation + GreenYellowParticles",
+      "audioEffect": "CoughSound",
       "isVisible": true
     },
     {
       "id": "sesak_nafas",
-      "displayName": "Sesak Nafas",
-      "description": "Kesulitan bernafas dan napas pendek",
+      "displayName": "Sesak Nafas / Suara Nafas",
+      "description": "Kesulitan bernafas dan suara nafas yang terdengar berat. Memicu animasi Fast breath dan oximeter.",
       "severity": 60,
-      "visualEffect": "BreathingStruggles",
-      "audioEffect": "WheezeSound",
-      "isVisible": true
-    },
-    {
-      "id": "demam",
-      "displayName": "Demam",
-      "description": "Suhu tubuh meningkat",
-      "severity": 55,
-      "visualEffect": "FeverEffect",
-      "audioEffect": "",
-      "isVisible": true
-    },
-    {
-      "id": "pucat",
-      "displayName": "Pucat",
-      "description": "Wajah pucat dan tidak sehat",
-      "severity": 70,
-      "visualEffect": "PaleEffect",
-      "audioEffect": "",
-      "isVisible": true
-    },
-    {
-      "id": "dada_cekung",
-      "displayName": "Dada Cekung",
-      "description": "Dada tampak cekung ketika bernafas",
-      "severity": 85,
-      "visualEffect": "ChestRetractionAnimation",
+      "visualEffect": "FastBreathAnimation + Oximeter",
       "audioEffect": "",
       "isVisible": true
     }
@@ -68,7 +41,7 @@
     {
       "id": "common_cold",
       "displayName": "Pilek Biasa",
-      "description": "Penyakit ringan yang umum terjadi pada bayi. Biasanya sembuh dalam waktu singkat.",
+      "description": "Penyakit ringan yang umum terjadi pada neonatal. Gejala utama: pilek dan batuk.",
       "symptomIds": ["pilek", "batuk"],
       "minSeverity": 30,
       "maxSeverity": 60,
@@ -79,8 +52,8 @@
     {
       "id": "pneumonia",
       "displayName": "Pneumonia",
-      "description": "Penyakit serius yang memerlukan perhatian medis. Ditandai dengan gejala parah.",
-      "symptomIds": ["pilek", "sesak_nafas", "batuk_berdahak", "demam", "pucat", "dada_cekung"],
+      "description": "Penyakit serius pada neonatal. Ditandai pilek, sesak atau suara nafas berat, dan batuk berdahak hijau atau kekuningan.",
+      "symptomIds": ["pilek", "sesak_nafas", "batuk_berdahak"],
       "minSeverity": 60,
       "maxSeverity": 100,
       "duration": 300,

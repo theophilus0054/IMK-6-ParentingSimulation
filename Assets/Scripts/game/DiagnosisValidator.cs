@@ -55,7 +55,6 @@ public class DiagnosisValidator : MonoBehaviour
     [Range(0, 100)] public float poorThreshold = 20f;      // >= 20 = Poor
 
     [Header("References")]
-    [SerializeField] private BabyDisease babyDisease;
     [SerializeField] private BabyBehavior babyBehavior;
 
     // Events
@@ -66,14 +65,9 @@ public class DiagnosisValidator : MonoBehaviour
     private void Start()
     {
         // Auto-assign components jika belum di-assign
-        if (babyDisease == null)
-            babyDisease = FindObjectOfType<BabyBehavior>()?.GetComponent<BabyDisease>();
-        
         if (babyBehavior == null)
             babyBehavior = FindObjectOfType<BabyBehavior>();
 
-        if (babyDisease == null)
-            Debug.LogError("[DiagnosisValidator] BabyDisease component tidak ditemukan!");
         if (babyBehavior == null)
             Debug.LogError("[DiagnosisValidator] BabyBehavior component tidak ditemukan!");
     }
@@ -81,15 +75,15 @@ public class DiagnosisValidator : MonoBehaviour
     /// <summary>
     /// Submit diagnosis dengan list gejala yang dipilih player
     /// </summary>
-    public DiagnosisResult SubmitDiagnosis(List<BabyDisease.Symptom> playerSelectedSymptoms)
+    public DiagnosisResult SubmitDiagnosis(List<BabyBehavior.Symptom> playerSelectedSymptoms)
     {
-        if (babyDisease == null || babyBehavior == null)
+        if (babyBehavior == null)
         {
-            Debug.LogError("[DiagnosisValidator] Missing references!");
+            Debug.LogError("[DiagnosisValidator] Missing BabyBehavior reference!");
             return null;
         }
 
-        lastResult = ValidateDiagnosis(playerSelectedSymptoms, babyDisease.currentDisease.symptoms);
+        lastResult = ValidateDiagnosis(playerSelectedSymptoms, babyBehavior.activeSymptoms);
         
         Debug.Log($"[DiagnosisValidator] Diagnosis submitted:");
         Debug.Log($"  - Accuracy: {lastResult.accuracy} ({lastResult.accuracyScore:F1}%)");
@@ -104,11 +98,11 @@ public class DiagnosisValidator : MonoBehaviour
     /// </summary>
     public DiagnosisResult SubmitDiagnosisByName(List<string> playerSelectedSymptomNames)
     {
-        List<BabyDisease.Symptom> symptoms = new List<BabyDisease.Symptom>();
+        List<BabyBehavior.Symptom> symptoms = new List<BabyBehavior.Symptom>();
         
         foreach (string name in playerSelectedSymptomNames)
         {
-            if (System.Enum.TryParse<BabyDisease.Symptom>(name, out BabyDisease.Symptom symptom))
+            if (System.Enum.TryParse<BabyBehavior.Symptom>(name, out BabyBehavior.Symptom symptom))
             {
                 symptoms.Add(symptom);
             }
@@ -120,7 +114,7 @@ public class DiagnosisValidator : MonoBehaviour
     /// <summary>
     /// Validasi diagnosis dan hitung score
     /// </summary>
-    private DiagnosisResult ValidateDiagnosis(List<BabyDisease.Symptom> selected, List<BabyDisease.Symptom> actual)
+    private DiagnosisResult ValidateDiagnosis(List<BabyBehavior.Symptom> selected, List<BabyBehavior.Symptom> actual)
     {
         DiagnosisResult result = new DiagnosisResult();
 
@@ -130,15 +124,15 @@ public class DiagnosisValidator : MonoBehaviour
         int falseNegatives = 0;
 
         // Remove duplicates
-        selected = new List<BabyDisease.Symptom>(new HashSet<BabyDisease.Symptom>(selected));
-        actual = new List<BabyDisease.Symptom>(new HashSet<BabyDisease.Symptom>(actual));
+        selected = new List<BabyBehavior.Symptom>(new HashSet<BabyBehavior.Symptom>(selected));
+        actual = new List<BabyBehavior.Symptom>(new HashSet<BabyBehavior.Symptom>(actual));
 
         // Cek setiap symptom yang ada di database
         var allSymptoms = GetAllPossibleSymptoms();
 
         foreach (var symptom in allSymptoms)
         {
-            if (symptom == BabyDisease.Symptom.None) continue;
+            if (symptom == BabyBehavior.Symptom.None) continue;
 
             bool isActual = actual.Contains(symptom);
             bool playerSelected = selected.Contains(symptom);
@@ -227,7 +221,7 @@ public class DiagnosisValidator : MonoBehaviour
     /// <summary>
     /// Dapatkan feedback untuk setiap symptom
     /// </summary>
-    private string GetSymptomFeedback(BabyDisease.Symptom symptom, bool isActual, bool playerSelected)
+    private string GetSymptomFeedback(BabyBehavior.Symptom symptom, bool isActual, bool playerSelected)
     {
         if (isActual && playerSelected)
             return "✓ Benar - Gejala ini memang ada pada bayi";
@@ -242,10 +236,10 @@ public class DiagnosisValidator : MonoBehaviour
     /// <summary>
     /// Dapatkan semua symptom yang mungkin (dari enum)
     /// </summary>
-    private List<BabyDisease.Symptom> GetAllPossibleSymptoms()
+    private List<BabyBehavior.Symptom> GetAllPossibleSymptoms()
     {
-        List<BabyDisease.Symptom> all = new List<BabyDisease.Symptom>();
-        foreach (BabyDisease.Symptom symptom in System.Enum.GetValues(typeof(BabyDisease.Symptom)))
+        List<BabyBehavior.Symptom> all = new List<BabyBehavior.Symptom>();
+        foreach (BabyBehavior.Symptom symptom in System.Enum.GetValues(typeof(BabyBehavior.Symptom)))
         {
             all.Add(symptom);
         }
@@ -300,19 +294,19 @@ public class DiagnosisValidator : MonoBehaviour
     /// </summary>
     public void EditorTestRandomDiagnosis()
     {
-        if (babyDisease == null)
+        if (babyBehavior == null)
         {
-            Debug.LogError("[DiagnosisValidator] BabyDisease not assigned!");
+            Debug.LogError("[DiagnosisValidator] BabyBehavior not assigned!");
             return;
         }
 
-        // Generate random diagnosis
-        List<BabyDisease.Symptom> randomSymptoms = new List<BabyDisease.Symptom>();
+        // Generate random diagnosis using BabyBehavior.Symptom
+        List<BabyBehavior.Symptom> randomSymptoms = new List<BabyBehavior.Symptom>();
         var allSymptoms = GetAllPossibleSymptoms();
 
         foreach (var symptom in allSymptoms)
         {
-            if (symptom != BabyDisease.Symptom.None && Random.value > 0.5f)
+            if (symptom != BabyBehavior.Symptom.None && Random.value > 0.5f)
             {
                 randomSymptoms.Add(symptom);
             }

@@ -30,8 +30,8 @@ public class SaveLoadManager : MonoBehaviour
         public int version = SAVE_VERSION;
         public int day;
         public int phaseIndex;
-        public float babyHunger;
-        public float babyComfort;
+        public float babyHealth;           // Health (0-100)
+        public float babyOxygenLevel;      // Oxygen level (0-100)
         public float babyTemperature;
         
         // Disease save data
@@ -46,11 +46,10 @@ public class SaveLoadManager : MonoBehaviour
         {
             GameManager gm = GameManager.Instance;
             BabyBehavior baby = gm.babyBehavior;
-            BabyDisease disease = baby.GetComponent<BabyDisease>();
 
-            if (baby == null || disease == null)
+            if (baby == null)
             {
-                Debug.LogError("[SaveLoad] BabyBehavior atau BabyDisease tidak ditemukan!");
+                Debug.LogError("[SaveLoad] BabyBehavior tidak ditemukan!");
                 return;
             }
 
@@ -58,18 +57,18 @@ public class SaveLoadManager : MonoBehaviour
             {
                 version = SAVE_VERSION,
                 day = gm.currentDay,
-                phaseIndex = (int)gm.currentPhase,
-                babyHunger = Mathf.Clamp(baby.hunger, 0f, 100f),
-                babyComfort = Mathf.Clamp(baby.comfort, 0f, 100f),
+                phaseIndex = 0,
+                babyHealth = Mathf.Clamp(baby.health, 0f, 100f),
+                babyOxygenLevel = Mathf.Clamp(baby.oxygenLevel, 0f, 100f),
                 babyTemperature = Mathf.Clamp(baby.temperature, 36f, 41f),
-                diseaseType = (int)disease.currentDisease.type,
-                diseaseSeverity = Mathf.Clamp(disease.currentDisease.severityLevel, 0f, 100f),
-                diseaseElapsedTime = disease.currentDisease.elapsedTime
+                diseaseType = (int)baby.currentDisease,
+                diseaseSeverity = baby.GetDiseaseSeverity() * 100f,
+                diseaseElapsedTime = baby.diseaseElapsedTime
             };
 
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(saveFilePath, json);
-            Debug.Log($"[SaveLoad] Game Saved! Day {data.day}, Phase {(GameManager.GamePhase)data.phaseIndex}");
+            Debug.Log($"[SaveLoad] Game Saved! Day {data.day}, Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
         }
         catch (System.Exception e)
         {
@@ -99,30 +98,32 @@ public class SaveLoadManager : MonoBehaviour
 
             GameManager gm = GameManager.Instance;
             BabyBehavior baby = gm.babyBehavior;
-            BabyDisease disease = baby.GetComponent<BabyDisease>();
 
-            if (baby == null || disease == null)
+            if (baby == null)
             {
-                Debug.LogError("[SaveLoad] BabyBehavior atau BabyDisease tidak ditemukan!");
+                Debug.LogError("[SaveLoad] BabyBehavior tidak ditemukan!");
                 return;
             }
 
             // Validate data ranges
             gm.currentDay = Mathf.Max(1, data.day);
-            gm.currentPhase = (GameManager.GamePhase)data.phaseIndex;
-            baby.hunger = Mathf.Clamp(data.babyHunger, 0f, 100f);
-            baby.comfort = Mathf.Clamp(data.babyComfort, 0f, 100f);
+            gm.currentPhase = GameManager.GamePhase.Neonatal;
+            baby.health = Mathf.Clamp(data.babyHealth, 0f, 100f);
+            baby.oxygenLevel = Mathf.Clamp(data.babyOxygenLevel, 0f, 100f);
             baby.temperature = Mathf.Clamp(data.babyTemperature, 36f, 41f);
 
             // Load disease state
             if (data.diseaseType > 0)
             {
-                disease.currentDisease.type = (BabyDisease.DiseaseType)data.diseaseType;
-                disease.currentDisease.severityLevel = Mathf.Clamp(data.diseaseSeverity, 0f, 100f);
-                disease.currentDisease.elapsedTime = Mathf.Max(0f, data.diseaseElapsedTime);
+                baby.currentDisease = (BabyBehavior.DiseaseState)data.diseaseType;
+                baby.diseaseElapsedTime = Mathf.Max(0f, data.diseaseElapsedTime);
+            }
+            else
+            {
+                baby.currentDisease = BabyBehavior.DiseaseState.None;
             }
 
-            Debug.Log($"[SaveLoad] Game Loaded! Day {data.day}, Phase {(GameManager.GamePhase)data.phaseIndex}");
+            Debug.Log($"[SaveLoad] Game Loaded! Day {data.day}, Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
         }
         catch (System.Exception e)
         {

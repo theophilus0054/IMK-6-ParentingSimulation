@@ -5,7 +5,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public enum GamePhase { Neonatal, Toddler }
+    public enum GamePhase { Neonatal }
     public enum GameState { Menu, Playing, Paused, Feedback, GameOver }
 
     [Header("Game Progression")]
@@ -15,11 +15,9 @@ public class GameManager : MonoBehaviour
     
     [Header("Phase Configuration")]
     public int neonatalPhaseDays = 7;
-    public int toddlerPhaseDays = 7;
 
     [Header("References")]
     public BabyBehavior babyBehavior;
-    private BabyDisease babyDisease;
     private SaveLoadManager saveLoadManager;
     // public UIManager uiManager; // Hubungkan dengan script UI Anda
 
@@ -43,7 +41,6 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        babyDisease = babyBehavior.GetComponent<BabyDisease>();
         saveLoadManager = GetComponent<SaveLoadManager>();
 
         if (saveLoadManager == null)
@@ -122,27 +119,14 @@ public class GameManager : MonoBehaviour
 
     private int GetMaxDaysForPhase()
     {
-        return currentPhase == GamePhase.Neonatal ? neonatalPhaseDays : toddlerPhaseDays;
+        return neonatalPhaseDays;
     }
 
     private void AdvanceToNextPhase()
     {
-        if (currentPhase == GamePhase.Neonatal)
-        {
-            currentPhase = GamePhase.Toddler;
-            currentDay = 1;
-            Debug.Log("[GAMEDAY] ===== MEMASUKI FASE TODDLER! =====");
-            // TODO: Logika ganti model bayi ke CHR-003 bisa dipicu di sini
-            // TODO: Increase difficulty untuk Toddler phase
-            Invoke(nameof(StartDayLoop), 2f);
-        }
-        else
-        {
-            Debug.Log("[GAMEDAY] ===== GAME SELESAI! MENAMPILKAN FUN FACT =====");
-            currentState = GameState.GameOver;
-            // uiManager.ShowFunFact();
-            // TODO: Show final feedback atau return to main menu
-        }
+        Debug.Log("[GAMEDAY] ===== FASE NEONATAL SELESAI! =====");
+        currentState = GameState.GameOver;
+        // TODO: Tampilkan ringkasan akhir, fun fact, atau layar selesai permainan.
     }
 
     public void PauseGame()
