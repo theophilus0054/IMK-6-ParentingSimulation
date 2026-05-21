@@ -1,146 +1,148 @@
 using UnityEngine;
 
 /// <summary>
-/// Audio cue system untuk berbagai gejala dan keadaan bayi
-/// Menangani: tangisan, batuk, pilek, sesak nafas, dll
+/// Audio system - Play audio berdasarkan symptoms dari BabyBehavior
+/// - Whimpering: Demam
+/// - Cough: Batuk / Batuk Berdahak
+/// - Wheeze: Sesak Nafas
+/// - Cry: Health rendah (critical)
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class BabyAudioCue : MonoBehaviour
 {
     private AudioSource audioSource;
-    private BabyDisease babyDisease;
+    private BabyBehavior babyBehavior;
 
-    [Header("Crying Audio")]
-    public AudioClip normalCryClip;
-    public AudioClip hungryCryClip;
-    public AudioClip uncomfortableCryClip;
-
-    [Header("Disease Audio")]
-    public AudioClip sneezeClip; // Pilek/bersin
-    public AudioClip coughClip; // Batuk biasa
-    public AudioClip coughWithPhlegmClip; // Batuk berdahak
-    public AudioClip wheezingClip; // Sesak nafas/suara terengah-engah
+    [Header("Audio Clips")]
+    public AudioClip normalCryClip;      // Critical state crying
+    public AudioClip whimperingClip;     // Demam whimpering
+    public AudioClip coughClip;          // Batuk & Batuk Berdahak
+    public AudioClip wheezingClip;       // Sesak Nafas
 
     [Header("Audio Parameters")]
-    [Range(0f, 1f)] public float cryVolume = 0.8f;
-    [Range(0f, 1f)] public float diseaseAudioVolume = 0.6f;
+    [Range(0f, 1f)] public float audioVolume = 0.7f;
     [Range(0.5f, 2f)] public float pitchVariation = 0.1f;
 
-    [Header("Timing")]
-    public float coughInterval = 5f; // Batuk setiap 5 detik
-    public float sneezeInterval = 8f; // Bersin setiap 8 detik
-    public float wheezingInterval = 3f; // Sesak nafas setiap 3 detik
-
-    private float lastCoughTime = 0f;
-    private float lastSneezeTime = 0f;
-    private float lastWheezeTime = 0f;
     private float lastCryTime = 0f;
+    private float lastWhimperTime = 0f;
+    private float lastCoughTime = 0f;
+    private float lastWheezeTime = 0f;
 
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
-        babyDisease = GetComponent<BabyDisease>();
+        babyBehavior = GetComponent<BabyBehavior>();
     }
 
     private void Update()
     {
-        if (GameManager.Instance == null || GameManager.Instance.currentState != GameManager.GameState.Playing) return;
+        if (GameManager.Instance == null || GameManager.Instance.currentState != GameManager.GameState.Playing)
+            return;
 
-        UpdateDiseaseAudio();
+        UpdateAudio();
     }
 
-    public void PlayCry(BabyBehavior.BabyState state)
+    private void UpdateAudio()
     {
-        if (Time.time - lastCryTime < 1f) return; // Cooldown 1 detik
-        lastCryTime = Time.time;
+        if (babyBehavior == null) return;
 
-        if (audioSource == null)
+        // Demam → Whimpering
+        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam))
         {
-            Debug.LogError("[BabyAudioCue] AudioSource tidak ditemukan!");
+            PlayWhimper();
+        }
+
+        // Batuk/BatukBerdahak → Coughing
+        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Batuk))
+        {
+            PlayCough("Batuk");
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak))
+        {
+            PlayCough("BatukBerdahak");
+        }
+
+        // SesakNafas → Wheezing
+        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
+        {
+            PlayWheeze();
+        }
+
+        // Critical health → Crying
+        if (babyBehavior.health < babyBehavior.criticalHealthThreshold)
+        {
+            PlayCry();
+        }
+    }
+
+    private void PlayCry()
+    {
+        if (normalCryClip == null)
+        {
+            Debug.LogWarning("[AUDIO] Cry clip kosong!");
             return;
         }
 
-        AudioClip clipToPlay = normalCryClip;
-
-        switch (state)
-        {
-            case BabyBehavior.BabyState.Lapar:
-                clipToPlay = hungryCryClip;
-                break;
-            case BabyBehavior.BabyState.TidakNyaman:
-                clipToPlay = uncomfortableCryClip;
-                break;
-        }
-
-        if (clipToPlay != null)
-        {
-            audioSource.volume = cryVolume;
-            audioSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
-            audioSource.PlayOneShot(clipToPlay);
-        }
-        else
-        {
-            Debug.LogWarning($"[BabyAudioCue] Cry clip untuk state {state} kosong!");
-        }
+        float clipLen = Mathf.Max(0.1f, normalCryClip.length);
+        if (Time.time - lastCryTime < clipLen) return; // wait until previous clip finished
+        lastCryTime = Time.time;
+        PlayAudio(normalCryClip, "CRY");
     }
 
-    private void UpdateDiseaseAudio()
+    private void PlayWhimper()
     {
-        if (babyDisease.currentDisease.type == BabyDisease.DiseaseType.None) return;
-
-        // Pilek - bersin
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.Pilek))
+        if (whimperingClip == null)
         {
-            if (Time.time - lastSneezeTime >= sneezeInterval)
-            {
-                PlayDiseaseAudio(sneezeClip);
-                lastSneezeTime = Time.time;
-            }
+            Debug.LogWarning("[AUDIO] Whimpering clip kosong!");
+            return;
         }
 
-        // Batuk biasa
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.Batuk) && 
-            !babyDisease.HasSymptom(BabyDisease.Symptom.BatukBerdahak))
-        {
-            if (Time.time - lastCoughTime >= coughInterval)
-            {
-                PlayDiseaseAudio(coughClip);
-                lastCoughTime = Time.time;
-            }
-        }
-
-        // Batuk berdahak (lebih sering dan berat)
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.BatukBerdahak))
-        {
-            if (Time.time - lastCoughTime >= coughInterval * 0.5f) // 2x lebih sering
-            {
-                PlayDiseaseAudio(coughWithPhlegmClip);
-                lastCoughTime = Time.time;
-            }
-        }
-
-        // Sesak nafas
-        if (babyDisease.HasSymptom(BabyDisease.Symptom.SesakNafas))
-        {
-            if (Time.time - lastWheezeTime >= wheezingInterval)
-            {
-                PlayDiseaseAudio(wheezingClip);
-                lastWheezeTime = Time.time;
-            }
-        }
+        float clipLen = Mathf.Max(0.1f, whimperingClip.length);
+        if (Time.time - lastWhimperTime < clipLen) return;
+        lastWhimperTime = Time.time;
+        PlayAudio(whimperingClip, "WHIMPER");
     }
 
-    private void PlayDiseaseAudio(AudioClip clip)
+    private void PlayCough(string coughType)
     {
-        if (clip != null && audioSource != null)
+        if (coughClip == null)
         {
-            audioSource.volume = diseaseAudioVolume;
-            audioSource.pitch = 1f + Random.Range(-pitchVariation * 0.5f, pitchVariation * 0.5f);
-            audioSource.PlayOneShot(clip);
+            Debug.LogWarning("[AUDIO] Cough clip kosong!");
+            return;
         }
-        else if (clip == null)
+
+        // Use clip length as cooldown to avoid overlap
+        float clipLen = Mathf.Max(0.1f, coughClip.length);
+        if (Time.time - lastCoughTime < clipLen) return;
+        lastCoughTime = Time.time;
+        PlayAudio(coughClip, $"COUGH ({coughType})");
+    }
+
+    private void PlayWheeze()
+    {
+        if (wheezingClip == null)
         {
-            Debug.LogWarning("[BabyAudioCue] Audio clip kosong!");
+            Debug.LogWarning("[AUDIO] Wheeze clip kosong!");
+            return;
         }
+
+        float clipLen = Mathf.Max(0.1f, wheezingClip.length);
+        if (Time.time - lastWheezeTime < clipLen) return;
+        lastWheezeTime = Time.time;
+        PlayAudio(wheezingClip, "WHEEZE");
+    }
+
+    private void PlayAudio(AudioClip clip, string audioType = "Audio")
+    {
+        if (audioSource == null)
+        {
+            Debug.LogError("[AUDIO] AudioSource null!");
+            return;
+        }
+
+        audioSource.volume = audioVolume;
+        audioSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
+        audioSource.PlayOneShot(clip);
+        Debug.Log($"<color=magenta>[AUDIO {audioType}] {clip.name} ({clip.length:F1}s)</color>");
     }
 }
