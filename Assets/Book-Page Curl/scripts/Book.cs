@@ -15,7 +15,7 @@ public enum FlipMode
 public class Book : MonoBehaviour {
     public Canvas canvas;
     [SerializeField]
-    RectTransform BookPanel;
+    public RectTransform BookPanel;
     public Sprite background;
     public Sprite[] bookPages;
     public bool interactable=true;
@@ -136,6 +136,7 @@ public class Book : MonoBehaviour {
             return localPos;
         }
     }
+    /*
     void Update()
     {
         if (pageDragging && interactable)
@@ -150,7 +151,7 @@ public class Book : MonoBehaviour {
             UpdateBookRTLToPoint(f);
         else
             UpdateBookLTRToPoint(f);
-    }
+    }*/
     public void UpdateBookLTRToPoint(Vector3 followLocation)
     {
         mode = FlipMode.LeftToRight;
@@ -281,7 +282,6 @@ public class Book : MonoBehaviour {
         mode = FlipMode.RightToLeft;
         f = point;
 
-
         NextPageClip.rectTransform.pivot = new Vector2(0, 0.12f);
         ClippingPlane.rectTransform.pivot = new Vector2(1, 0.35f);
 
@@ -289,15 +289,21 @@ public class Book : MonoBehaviour {
         Left.rectTransform.pivot = new Vector2(0, 0);
         Left.transform.position = RightNext.transform.position;
         Left.transform.eulerAngles = new Vector3(0, 0, 0);
-        Left.sprite = (currentPage < bookPages.Length) ? bookPages[currentPage] : background;
+
+        // PERBAIKAN 1: Pengaman index halaman
+        Left.sprite = (currentPage >= 0 && currentPage < bookPages.Length) ? bookPages[currentPage] : background;
+
         Left.transform.SetAsFirstSibling();
-        
+
         Right.gameObject.SetActive(true);
         Right.transform.position = RightNext.transform.position;
         Right.transform.eulerAngles = new Vector3(0, 0, 0);
-        Right.sprite = (currentPage < bookPages.Length - 1) ? bookPages[currentPage + 1] : background;
 
-        RightNext.sprite = (currentPage < bookPages.Length - 2) ? bookPages[currentPage + 2] : background;
+        // PERBAIKAN 2: Pengaman index halaman + 1
+        Right.sprite = (currentPage + 1 >= 0 && currentPage + 1 < bookPages.Length) ? bookPages[currentPage + 1] : background;
+
+        // PERBAIKAN 3: Pengaman index halaman + 2
+        RightNext.sprite = (currentPage + 2 >= 0 && currentPage + 2 < bookPages.Length) ? bookPages[currentPage + 2] : background;
 
         LeftNext.transform.SetAsFirstSibling();
         if (enableShadowEffect) Shadow.gameObject.SetActive(true);
@@ -321,7 +327,10 @@ public class Book : MonoBehaviour {
 
         Right.gameObject.SetActive(true);
         Right.transform.position = LeftNext.transform.position;
-        Right.sprite = bookPages[currentPage - 1];
+
+        // PERBAIKAN 1: Mencegah error jika currentPage melebihi jumlah halaman
+        Right.sprite = (currentPage - 1 < bookPages.Length) ? bookPages[currentPage - 1] : background;
+
         Right.transform.eulerAngles = new Vector3(0, 0, 0);
         Right.transform.SetAsFirstSibling();
 
@@ -329,9 +338,12 @@ public class Book : MonoBehaviour {
         Left.rectTransform.pivot = new Vector2(1, 0);
         Left.transform.position = LeftNext.transform.position;
         Left.transform.eulerAngles = new Vector3(0, 0, 0);
-        Left.sprite = (currentPage >= 2) ? bookPages[currentPage - 2] : background;
 
-        LeftNext.sprite = (currentPage >= 3) ? bookPages[currentPage - 3] : background;
+        // PERBAIKAN 2: Pengaman tambahan
+        Left.sprite = (currentPage >= 2 && currentPage - 2 < bookPages.Length) ? bookPages[currentPage - 2] : background;
+
+        // PERBAIKAN 3: Pengaman tambahan
+        LeftNext.sprite = (currentPage >= 3 && currentPage - 3 < bookPages.Length) ? bookPages[currentPage - 3] : background;
 
         RightNext.transform.SetAsFirstSibling();
         if (enableShadowEffect) ShadowLTR.gameObject.SetActive(true);
