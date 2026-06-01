@@ -35,6 +35,15 @@
       "visualEffect": "FastBreathAnimation + Oximeter",
       "audioEffect": "",
       "isVisible": true
+    },
+    {
+      "id": "demam",
+      "displayName": "Demam",
+      "description": "Suhu tubuh bayi meningkat. Memicu animasi Rewel, suara demam/rewel, dan thermometer.",
+      "severity": 65,
+      "visualEffect": "RewelAnimation + Thermometer",
+      "audioEffect": "WhimperingSound",
+      "isVisible": true
     }
   ],
   "diseases": [
@@ -53,7 +62,7 @@
       "id": "pneumonia",
       "displayName": "Pneumonia",
       "description": "Penyakit serius pada neonatal. Ditandai pilek, sesak atau suara nafas berat, dan batuk berdahak hijau atau kekuningan.",
-      "symptomIds": ["pilek", "sesak_nafas", "batuk_berdahak"],
+      "symptomIds": ["pilek", "batuk_berdahak", "sesak_nafas", "demam"],
       "minSeverity": 60,
       "maxSeverity": 100,
       "duration": 300,

@@ -2,10 +2,11 @@ using UnityEngine;
 
 /// <summary>
 /// Audio system - Play audio berdasarkan symptoms dari BabyBehavior
+/// UPDATED: Audio mengikuti fase gejala eksklusif dari BabyBehavior
 /// - Whimpering: Demam
 /// - Cough: Batuk / Batuk Berdahak
 /// - Wheeze: Sesak Nafas
-/// - Cry: Health rendah (critical)
+/// - Cry: fase nangis pneumonia atau health rendah di luar pneumonia
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class BabyAudioCue : MonoBehaviour
@@ -23,11 +24,6 @@ public class BabyAudioCue : MonoBehaviour
     [Range(0f, 1f)] public float audioVolume = 0.7f;
     [Range(0.5f, 2f)] public float pitchVariation = 0.1f;
 
-    private float lastCryTime = 0f;
-    private float lastWhimperTime = 0f;
-    private float lastCoughTime = 0f;
-    private float lastWheezeTime = 0f;
-
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -44,105 +40,63 @@ public class BabyAudioCue : MonoBehaviour
 
     private void UpdateAudio()
     {
-        if (babyBehavior == null) return;
+        if (babyBehavior == null || audioSource == null) return;
 
-        // Demam → Whimpering
-        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam))
+        AudioClip expectedClip = null;
+        string expectedAudioType = "";
+
+        // Tentukan audio clip yang seharusnya dimainkan berdasarkan fase gejala.
+        // Prioritas mengikuti logika BabyAnimator (Crying -> Demam -> Sesak -> Batuk)
+        if (babyBehavior.ShouldPlayCryAnimation())
         {
-            PlayWhimper();
+            expectedClip = normalCryClip;
+            expectedAudioType = "CRY";
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam))
+        {
+            expectedClip = whimperingClip;
+            expectedAudioType = "WHIMPER";
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
+        {
+            expectedClip = wheezingClip;
+            expectedAudioType = "WHEEZE";
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Batuk) || babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak))
+        {
+            expectedClip = coughClip;
+            expectedAudioType = "COUGH";
         }
 
-        // Batuk/BatukBerdahak → Coughing
-        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Batuk))
+        // Handle Audio Playback and Stopping
+        if (expectedClip != null)
         {
-            PlayCough("Batuk");
+            // Jika klip yang dimainkan sekarang berbeda dengan klip yang seharusnya, GANTI!
+            if (audioSource.clip != expectedClip)
+            {
+                audioSource.Stop();
+                audioSource.clip = expectedClip;
+                audioSource.volume = audioVolume;
+                audioSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
+                audioSource.Play();
+                Debug.Log($"<color=magenta>[AUDIO {expectedAudioType}] Started {expectedClip.name}</color>");
+            }
+            // Jika klip yang sama sudah selesai dimainkan, putar ulang (loop manual dengan pitch bervariasi)
+            else if (!audioSource.isPlaying)
+            {
+                audioSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
+                audioSource.Play();
+            }
         }
-        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak))
+        else
         {
-            PlayCough("BatukBerdahak");
+            // Jika tidak ada gejala aktif / animasi tidak relevan, PASTIKAN audio berhenti
+            if (audioSource.isPlaying || audioSource.clip != null)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+                Debug.Log($"<color=magenta>[AUDIO] Stopped explicitly.</color>");
+            }
         }
-
-        // SesakNafas → Wheezing
-        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
-        {
-            PlayWheeze();
-        }
-
-        // Critical health → Crying
-        if (babyBehavior.health < babyBehavior.criticalHealthThreshold)
-        {
-            PlayCry();
-        }
-    }
-
-    private void PlayCry()
-    {
-        if (normalCryClip == null)
-        {
-            Debug.LogWarning("[AUDIO] Cry clip kosong!");
-            return;
-        }
-
-        float clipLen = Mathf.Max(0.1f, normalCryClip.length);
-        if (Time.time - lastCryTime < clipLen) return; // wait until previous clip finished
-        lastCryTime = Time.time;
-        PlayAudio(normalCryClip, "CRY");
-    }
-
-    private void PlayWhimper()
-    {
-        if (whimperingClip == null)
-        {
-            Debug.LogWarning("[AUDIO] Whimpering clip kosong!");
-            return;
-        }
-
-        float clipLen = Mathf.Max(0.1f, whimperingClip.length);
-        if (Time.time - lastWhimperTime < clipLen) return;
-        lastWhimperTime = Time.time;
-        PlayAudio(whimperingClip, "WHIMPER");
-    }
-
-    private void PlayCough(string coughType)
-    {
-        if (coughClip == null)
-        {
-            Debug.LogWarning("[AUDIO] Cough clip kosong!");
-            return;
-        }
-
-        // Use clip length as cooldown to avoid overlap
-        float clipLen = Mathf.Max(0.1f, coughClip.length);
-        if (Time.time - lastCoughTime < clipLen) return;
-        lastCoughTime = Time.time;
-        PlayAudio(coughClip, $"COUGH ({coughType})");
-    }
-
-    private void PlayWheeze()
-    {
-        if (wheezingClip == null)
-        {
-            Debug.LogWarning("[AUDIO] Wheeze clip kosong!");
-            return;
-        }
-
-        float clipLen = Mathf.Max(0.1f, wheezingClip.length);
-        if (Time.time - lastWheezeTime < clipLen) return;
-        lastWheezeTime = Time.time;
-        PlayAudio(wheezingClip, "WHEEZE");
-    }
-
-    private void PlayAudio(AudioClip clip, string audioType = "Audio")
-    {
-        if (audioSource == null)
-        {
-            Debug.LogError("[AUDIO] AudioSource null!");
-            return;
-        }
-
-        audioSource.volume = audioVolume;
-        audioSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
-        audioSource.PlayOneShot(clip);
-        Debug.Log($"<color=magenta>[AUDIO {audioType}] {clip.name} ({clip.length:F1}s)</color>");
     }
 }

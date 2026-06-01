@@ -8,7 +8,7 @@ using System.Collections.Generic;
 /// - Disease Progression: None → CommonCold → Pneumonia
 /// - Symptoms: Pilek, Batuk, SesakNafas, BatukBerdahak, Demam
 /// - State Triggering: Animations, Effects, Audio
-/// 
+///
 /// Flow:
 /// Normal → Penyakit Biasa (Pilek + Batuk) → tetap/develop ke Pneumonia (Pilek + Sesak + Batuk Berdahak + Demam)
 /// </summary>
@@ -30,14 +30,20 @@ public class BabyBehavior : MonoBehaviour
     [Header("🦠 DISEASE STATE")]
     public DiseaseState currentDisease = DiseaseState.None;
     public List<Symptom> activeSymptoms = new List<Symptom>();
-    
+
     [Header("Disease Timers")]
     public float diseaseElapsedTime = 0f;
     public float diseaseProgressionChance = 0.1f;  // Chance per second to progress to Pneumonia
-    
+
     private DiseaseState lastLoggedDisease = DiseaseState.None;
     private List<Symptom> lastLoggedSymptoms = new List<Symptom>();
     private DiseaseState lastDisease = DiseaseState.None; // track external changes
+
+    private float lastPilekOnsetLog = -1f;           // Track kapan Pilek onset di-log
+    private float lastBatukBerdahakOnsetLog = -1f;   // Track kapan BatukBerdahak onset di-log
+    private float lastSesakOnsetLog = -1f;           // Track kapan SesakNafas onset di-log
+    private float lastDemamOnsetLog = -1f;           // Track kapan Demam onset di-log
+    private float lastCryOnsetLog = -1f;             // Track kapan Cry onset di-log
 
     // Editor: handle changes made in Inspector so symptoms update immediately
     private void OnValidate()
@@ -79,7 +85,7 @@ public class BabyBehavior : MonoBehaviour
     [Header("Disease Duration")]
     public float commonColdDuration = 30f;          // short for testing (30s)
     public float pneumoniaDuration = 60f;           // short for testing (60s)
-    
+
     private float diseaseCureDuration = 0f;
 
     [Header("Symptom Onset Times (seconds)")]
@@ -91,10 +97,17 @@ public class BabyBehavior : MonoBehaviour
     [Tooltip("Pneumonia: Pilek onset (s)")]
     public float pn_onset_pilek = 0f;
     [Tooltip("Pneumonia: Batuk berdahak onset (s)")]
-    public float pn_onset_batuk_berdahak = 2f;
+    public float pn_onset_batuk_berdahak = 10f;
     [Tooltip("Pneumonia: Sesak nafas onset (s)")]
-    public float pn_onset_sesak = 5f;
-    
+    public float pn_onset_sesak = 20f;
+    [Tooltip("Pneumonia: Demam onset delay setelah Sesak (s) - jadi total onset = pn_onset_sesak + ini")]
+    public float pn_onset_demam_delay = 10f;  // 10 detik setelah Sesak Nafas
+    [Tooltip("Pneumonia: Nangis onset delay setelah Demam (s) - jadi total onset = demam onset + ini")]
+    public float pn_onset_cry_delay = 10f;    // 10 detik setelah Demam
+
+    private float pn_onset_demam_calculated = -1f;  // Calculated saat SesakNafas onset
+    private float pn_onset_cry_calculated = -1f;    // Calculated saat Demam onset
+
     // ============ RANDOM INFECTION ============
     [Header("Random Infection")]
     public float diseaseChancePerSecond = 0.001f;   // Random chance to catch cold each second
@@ -124,7 +137,6 @@ public class BabyBehavior : MonoBehaviour
         UpdateVitalSigns();
         UpdateDiseaseProgression();
         UpdateSymptoms();
-        UpdateAnimationState();
         UpdateAudioCues();
     }
 
@@ -138,19 +150,21 @@ public class BabyBehavior : MonoBehaviour
         if (currentDisease != DiseaseState.None)
         {
             float diseaseSeverity = GetDiseaseSeverity();
-            float tempFactor = temperature >= feverThreshold ? (temperature - feverThreshold) * 2f : 0f;
-            health -= timeScale * (healthDecayRate * diseaseSeverity + tempFactor) * Time.deltaTime;
+            // Fever acts as a multiplier (e.g. 1.0x normal, up to 1.5x during high fever) instead of massive flat damage
+            float tempMultiplier = temperature >= feverThreshold ? 1.0f + ((temperature - feverThreshold) * 0.5f) : 1.0f;
+
+            health -= timeScale * (healthDecayRate * diseaseSeverity * tempMultiplier) * Time.deltaTime;
         }
         else if (temperature > 38f)
         {
-            // Demam tanpa penyakit juga damage health
-            health -= timeScale * (temperature - 38f) * Time.deltaTime;
+            // Demam tanpa penyakit juga damage health (tapi scaling kecil berdasarkan decay rate user)
+            health -= timeScale * (healthDecayRate * (temperature - 38f)) * Time.deltaTime;
         }
-        
+
         health = Mathf.Clamp(health, 0, 100f);
 
-        // OXYGEN: Decreases jika Sesak Nafas, recovers otherwise
-        if (HasSymptom(Symptom.SesakNafas))
+        // OXYGEN: Decreases jika Sesak Nafas atau sedang Pneumonia fase lanjut, recovers otherwise
+        if (HasSymptom(Symptom.SesakNafas) || (currentDisease == DiseaseState.Pneumonia && diseaseElapsedTime >= pn_onset_sesak))
         {
             oxygenLevel -= timeScale * oxygenDecayRate * Time.deltaTime;
         }
@@ -158,7 +172,7 @@ public class BabyBehavior : MonoBehaviour
         {
             oxygenLevel += timeScale * (oxygenDecayRate * 0.5f) * Time.deltaTime;
         }
-        
+
         oxygenLevel = Mathf.Clamp(oxygenLevel, 0, 100f);
 
         // Log significant changes
@@ -254,14 +268,59 @@ public class BabyBehavior : MonoBehaviour
         }
         else if (currentDisease == DiseaseState.Pneumonia)
         {
-            if (diseaseElapsedTime >= pn_onset_pilek) activeSymptoms.Add(Symptom.Pilek);
-            if (diseaseElapsedTime >= pn_onset_batuk_berdahak) activeSymptoms.Add(Symptom.BatukBerdahak);
-            if (diseaseElapsedTime >= pn_onset_sesak) activeSymptoms.Add(Symptom.SesakNafas);
+            // Pneumonia phases: eksklusif agar animasi/audio/particle tidak saling tumpuk.
+            float demamOnset = GetPneumoniaDemamOnsetTime();
+            float cryOnset = GetPneumoniaCryOnsetTime();
 
-            // Demam jadi symptom jika suhu naik melewati threshold
-            if (temperature >= feverThreshold)
+            // Phase 5: Nangis (T = 40s+), demam tetap jadi gejala klinisnya.
+            if (diseaseElapsedTime >= cryOnset)
             {
                 activeSymptoms.Add(Symptom.Demam);
+                if (lastCryOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 5: Nangis muncul di T={diseaseElapsedTime:F1}s setelah Demam 10 detik. Efek Demam dihentikan.</color>");
+                    lastCryOnsetLog = diseaseElapsedTime;
+                }
+            }
+            // Phase 4: Demam (T = 30s - 40s)
+            else if (diseaseElapsedTime >= demamOnset)
+            {
+                activeSymptoms.Add(Symptom.Demam);
+                if (lastDemamOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 4: Demam muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastDemamOnsetLog = diseaseElapsedTime;
+                }
+            }
+            // Phase 3: Sesak Nafas (T = 20s - 30s)
+            else if (diseaseElapsedTime >= pn_onset_sesak)
+            {
+                activeSymptoms.Add(Symptom.SesakNafas);
+                if (lastSesakOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 3: Sesak Nafas muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastSesakOnsetLog = diseaseElapsedTime;
+                }
+            }
+            // Phase 2: Batuk Berdahak (T = 10s - 20s)
+            else if (diseaseElapsedTime >= pn_onset_batuk_berdahak)
+            {
+                activeSymptoms.Add(Symptom.BatukBerdahak);
+                if (lastBatukBerdahakOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 2: Batuk Berdahak muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastBatukBerdahakOnsetLog = diseaseElapsedTime;
+                }
+            }
+            // Phase 1: Pilek (T = 0s - 10s)
+            else if (diseaseElapsedTime >= pn_onset_pilek)
+            {
+                activeSymptoms.Add(Symptom.Pilek);
+                if (lastPilekOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 1: Pilek muncul di T={diseaseElapsedTime:F1}s</color>");
+                    lastPilekOnsetLog = diseaseElapsedTime;
+                }
             }
         }
 
@@ -287,34 +346,6 @@ public class BabyBehavior : MonoBehaviour
         }
     }
 
-    // ============ ANIMATION ROUTING ============
-    private void UpdateAnimationState()
-    {
-        if (babyAnim == null) return;
-
-        string animationState = "Lay breath"; // Default
-
-        // Priority: disease symptoms first
-        if (HasSymptom(Symptom.SesakNafas))
-        {
-            animationState = "Fast breath";
-        }
-        else if (HasSymptom(Symptom.Demam))
-        {
-            animationState = "Rewel";
-        }
-        else if (HasSymptom(Symptom.BatukBerdahak) || HasSymptom(Symptom.Batuk))
-        {
-            animationState = "Cough";
-        }
-        else if (health < criticalHealthThreshold)
-        {
-            animationState = "Crying";
-        }
-
-        babyAnim.PlayAnimationState(animationState);
-    }
-
     // ============ AUDIO ROUTING ============
     private void UpdateAudioCues()
     {
@@ -331,7 +362,17 @@ public class BabyBehavior : MonoBehaviour
         diseaseCureDuration = commonColdDuration;
         temperature = 37f;
 
+        // Reset onset tracking
+        lastPilekOnsetLog = -1f;
+        lastBatukBerdahakOnsetLog = -1f;
+        lastSesakOnsetLog = -1f;
+        lastDemamOnsetLog = -1f;
+        lastCryOnsetLog = -1f;
+        pn_onset_demam_calculated = -1f;
+        pn_onset_cry_calculated = -1f;
+
         Debug.Log($"\n<color=yellow>[INFECTION] Bayi terkena PENYAKIT BIASA</color> | Durasi: {commonColdDuration}s\n");
+        lastDisease = currentDisease;
         if (currentDisease != lastLoggedDisease)
         {
             lastLoggedDisease = currentDisease;
@@ -344,8 +385,18 @@ public class BabyBehavior : MonoBehaviour
         diseaseElapsedTime = 0f;
         diseaseCureDuration = pneumoniaDuration;
         temperature = 38.5f;
-        
+
+        // Reset onset tracking untuk log fresh & demam delay
+        lastPilekOnsetLog = -1f;
+        lastBatukBerdahakOnsetLog = -1f;
+        lastSesakOnsetLog = -1f;
+        lastDemamOnsetLog = -1f;
+        lastCryOnsetLog = -1f;
+        pn_onset_demam_calculated = -1f;
+        pn_onset_cry_calculated = -1f;
+
         Debug.Log($"\n<color=red>[INFECTION] Bayi terkena PNEUMONIA</color> | Durasi: {pneumoniaDuration}s\n");
+        lastDisease = currentDisease;
     }
 
     public void ProgressToPneumonia()
@@ -365,6 +416,7 @@ public class BabyBehavior : MonoBehaviour
             diseaseElapsedTime = 0f;
             activeSymptoms.Clear();
             temperature = 36.5f;
+            lastDisease = currentDisease;
         }
     }
 
@@ -372,6 +424,42 @@ public class BabyBehavior : MonoBehaviour
     public bool HasSymptom(Symptom symptom)
     {
         return activeSymptoms.Contains(symptom);
+    }
+
+    public float GetPneumoniaDemamOnsetTime()
+    {
+        if (pn_onset_demam_calculated < 0f)
+        {
+            pn_onset_demam_calculated = pn_onset_sesak + pn_onset_demam_delay;
+        }
+
+        return pn_onset_demam_calculated;
+    }
+
+    public float GetPneumoniaCryOnsetTime()
+    {
+        if (pn_onset_cry_calculated < 0f)
+        {
+            pn_onset_cry_calculated = GetPneumoniaDemamOnsetTime() + pn_onset_cry_delay;
+        }
+
+        return pn_onset_cry_calculated;
+    }
+
+    public bool IsPneumoniaCryPhase()
+    {
+        return currentDisease == DiseaseState.Pneumonia && diseaseElapsedTime >= GetPneumoniaCryOnsetTime();
+    }
+
+    public bool ShouldPlayCryAnimation()
+    {
+        if (IsPneumoniaCryPhase())
+        {
+            return true;
+        }
+
+        // Saat pneumonia, cry dikunci sampai fase Demam berjalan 10 detik.
+        return currentDisease != DiseaseState.Pneumonia && health < criticalHealthThreshold;
     }
 
     public float GetDiseaseSeverity()
