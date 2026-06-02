@@ -40,10 +40,13 @@ public class BabyBehavior : MonoBehaviour
     private DiseaseState lastDisease = DiseaseState.None; // track external changes
 
     private float lastPilekOnsetLog = -1f;           // Track kapan Pilek onset di-log
+    private float lastBatukOnsetLog = -1f;           // Track kapan Batuk onset di-log
     private float lastBatukBerdahakOnsetLog = -1f;   // Track kapan BatukBerdahak onset di-log
     private float lastSesakOnsetLog = -1f;           // Track kapan SesakNafas onset di-log
     private float lastDemamOnsetLog = -1f;           // Track kapan Demam onset di-log
     private float lastCryOnsetLog = -1f;             // Track kapan Cry onset di-log
+    private int lastCommonColdCycleIndex = -1;
+    private int lastPneumoniaCycleIndex = -1;
 
     // Editor: handle changes made in Inspector so symptoms update immediately
     private void OnValidate()
@@ -92,7 +95,11 @@ public class BabyBehavior : MonoBehaviour
     [Tooltip("Common Cold: Pilek onset (s)")]
     public float cc_onset_pilek = 0f;
     [Tooltip("Common Cold: Batuk onset (s)")]
-    public float cc_onset_batuk = 3f;
+    public float cc_onset_batuk = 10f;
+    [Tooltip("Common Cold: Nangis onset delay setelah Batuk (s) - jadi total onset = cc_onset_batuk + ini")]
+    public float cc_onset_cry_delay = 10f;
+    [Tooltip("Common Cold: Durasi Nangis sebelum kembali ke Pilek (s)")]
+    public float cc_cry_duration = 10f;
 
     [Tooltip("Pneumonia: Pilek onset (s)")]
     public float pn_onset_pilek = 0f;
@@ -104,13 +111,24 @@ public class BabyBehavior : MonoBehaviour
     public float pn_onset_demam_delay = 10f;  // 10 detik setelah Sesak Nafas
     [Tooltip("Pneumonia: Nangis onset delay setelah Demam (s) - jadi total onset = demam onset + ini")]
     public float pn_onset_cry_delay = 10f;    // 10 detik setelah Demam
+    [Tooltip("Pneumonia: Durasi Nangis sebelum kembali ke Pilek (s)")]
+    public float pn_cry_duration = 10f;
 
+    private float cc_onset_cry_calculated = -1f;
     private float pn_onset_demam_calculated = -1f;  // Calculated saat SesakNafas onset
     private float pn_onset_cry_calculated = -1f;    // Calculated saat Demam onset
 
     // ============ RANDOM INFECTION ============
+    [Header("Initial Rest Time")]
+    [Tooltip("Durasi awal bayi tetap sehat sebelum penyakit biasa boleh muncul otomatis.")]
+    public float initialRestDuration = 10f;
+    [Tooltip("Jika aktif, bayi otomatis terkena penyakit biasa setelah rest time selesai.")]
+    public bool autoInfectCommonColdAfterRest = true;
+
     [Header("Random Infection")]
     public float diseaseChancePerSecond = 0.001f;   // Random chance to catch cold each second
+    private float initialRestStartedAt = -1f;
+    private bool initialRestAutoInfectionTriggered = false;
     private float nextDiseaseCheckTime = 0f;
 
     // ============ COMPONENTS ============
@@ -163,8 +181,8 @@ public class BabyBehavior : MonoBehaviour
 
         health = Mathf.Clamp(health, 0, 100f);
 
-        // OXYGEN: Decreases jika Sesak Nafas atau sedang Pneumonia fase lanjut, recovers otherwise
-        if (HasSymptom(Symptom.SesakNafas) || (currentDisease == DiseaseState.Pneumonia && diseaseElapsedTime >= pn_onset_sesak))
+        // OXYGEN: Decreases hanya saat fase Sesak Nafas, recovers otherwise
+        if (HasSymptom(Symptom.SesakNafas) || IsPneumoniaSesakPhase())
         {
             oxygenLevel -= timeScale * oxygenDecayRate * Time.deltaTime;
         }
@@ -207,14 +225,36 @@ public class BabyBehavior : MonoBehaviour
             lastDisease = currentDisease;
         }
 
-        // Random infection when healthy
-        if (currentDisease == DiseaseState.None && Time.time > nextDiseaseCheckTime)
+        // Rest time awal sebelum penyakit biasa muncul.
+        if (currentDisease == DiseaseState.None)
         {
-            if (Random.value < diseaseChancePerSecond)
+            if (initialRestStartedAt < 0f)
             {
-                InfectCommonCold();
+                initialRestStartedAt = Time.time;
+                nextDiseaseCheckTime = Time.time + 1f;
+                Debug.Log($"[REST] Bayi mulai rest time awal selama {initialRestDuration:F1}s sebelum penyakit biasa muncul.");
             }
-            nextDiseaseCheckTime = Time.time + 1f;
+
+            if (IsInitialRestTimeComplete())
+            {
+                if (autoInfectCommonColdAfterRest && !initialRestAutoInfectionTriggered)
+                {
+                    initialRestAutoInfectionTriggered = true;
+                    InfectCommonCold();
+                }
+                else if (!autoInfectCommonColdAfterRest && Time.time > nextDiseaseCheckTime)
+                {
+                    if (Random.value < diseaseChancePerSecond)
+                    {
+                        InfectCommonCold();
+                    }
+                    nextDiseaseCheckTime = Time.time + 1f;
+                }
+            }
+            else
+            {
+                nextDiseaseCheckTime = Time.time + 1f;
+            }
         }
 
         // Disease timer update
@@ -263,63 +303,101 @@ public class BabyBehavior : MonoBehaviour
         // Add symptoms based on diseaseElapsedTime and configured onset times
         if (currentDisease == DiseaseState.CommonCold)
         {
-            if (diseaseElapsedTime >= cc_onset_pilek) activeSymptoms.Add(Symptom.Pilek);
-            if (diseaseElapsedTime >= cc_onset_batuk) activeSymptoms.Add(Symptom.Batuk);
-        }
-        else if (currentDisease == DiseaseState.Pneumonia)
-        {
-            // Pneumonia phases: eksklusif agar animasi/audio/particle tidak saling tumpuk.
-            float demamOnset = GetPneumoniaDemamOnsetTime();
-            float cryOnset = GetPneumoniaCryOnsetTime();
+            float cycleDuration = GetCommonColdCycleDuration();
+            ResetPhaseLogsIfNewCycle(ref lastCommonColdCycleIndex, cycleDuration);
 
-            // Phase 5: Nangis (T = 40s+), demam tetap jadi gejala klinisnya.
-            if (diseaseElapsedTime >= cryOnset)
+            float phaseTime = GetLoopedElapsedTime(cycleDuration);
+            float cryOnset = GetCommonColdCryOnsetTime();
+
+            // Phase 3: Nangis, Batuk tetap jadi gejala klinisnya.
+            if (phaseTime >= cryOnset)
             {
-                activeSymptoms.Add(Symptom.Demam);
+                activeSymptoms.Add(Symptom.Batuk);
                 if (lastCryOnsetLog < 0)
                 {
-                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 5: Nangis muncul di T={diseaseElapsedTime:F1}s setelah Demam 10 detik. Efek Demam dihentikan.</color>");
-                    lastCryOnsetLog = diseaseElapsedTime;
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Common Cold Phase 3: Nangis muncul di T={phaseTime:F1}s. Gejala Batuk dihentikan secara visual/audio.</color>");
+                    lastCryOnsetLog = phaseTime;
                 }
             }
-            // Phase 4: Demam (T = 30s - 40s)
-            else if (diseaseElapsedTime >= demamOnset)
+            // Phase 2: Batuk
+            else if (phaseTime >= cc_onset_batuk)
             {
-                activeSymptoms.Add(Symptom.Demam);
-                if (lastDemamOnsetLog < 0)
+                activeSymptoms.Add(Symptom.Batuk);
+                if (lastBatukOnsetLog < 0)
                 {
-                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 4: Demam muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
-                    lastDemamOnsetLog = diseaseElapsedTime;
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Common Cold Phase 2: Batuk muncul di T={phaseTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastBatukOnsetLog = phaseTime;
                 }
             }
-            // Phase 3: Sesak Nafas (T = 20s - 30s)
-            else if (diseaseElapsedTime >= pn_onset_sesak)
-            {
-                activeSymptoms.Add(Symptom.SesakNafas);
-                if (lastSesakOnsetLog < 0)
-                {
-                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 3: Sesak Nafas muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
-                    lastSesakOnsetLog = diseaseElapsedTime;
-                }
-            }
-            // Phase 2: Batuk Berdahak (T = 10s - 20s)
-            else if (diseaseElapsedTime >= pn_onset_batuk_berdahak)
-            {
-                activeSymptoms.Add(Symptom.BatukBerdahak);
-                if (lastBatukBerdahakOnsetLog < 0)
-                {
-                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 2: Batuk Berdahak muncul di T={diseaseElapsedTime:F1}s. Gejala sebelumnya dihentikan.</color>");
-                    lastBatukBerdahakOnsetLog = diseaseElapsedTime;
-                }
-            }
-            // Phase 1: Pilek (T = 0s - 10s)
-            else if (diseaseElapsedTime >= pn_onset_pilek)
+            // Phase 1: Pilek
+            else if (phaseTime >= cc_onset_pilek)
             {
                 activeSymptoms.Add(Symptom.Pilek);
                 if (lastPilekOnsetLog < 0)
                 {
-                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 1: Pilek muncul di T={diseaseElapsedTime:F1}s</color>");
-                    lastPilekOnsetLog = diseaseElapsedTime;
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Common Cold Phase 1: Pilek muncul di T={phaseTime:F1}s</color>");
+                    lastPilekOnsetLog = phaseTime;
+                }
+            }
+        }
+        else if (currentDisease == DiseaseState.Pneumonia)
+        {
+            float cycleDuration = GetPneumoniaCycleDuration();
+            ResetPhaseLogsIfNewCycle(ref lastPneumoniaCycleIndex, cycleDuration);
+
+            // Pneumonia phases: eksklusif agar animasi/audio/particle tidak saling tumpuk.
+            float phaseTime = GetLoopedElapsedTime(cycleDuration);
+            float demamOnset = GetPneumoniaDemamOnsetTime();
+            float cryOnset = GetPneumoniaCryOnsetTime();
+
+            // Phase 5: Nangis (T = 40s+), demam tetap jadi gejala klinisnya.
+            if (phaseTime >= cryOnset)
+            {
+                activeSymptoms.Add(Symptom.Demam);
+                if (lastCryOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 5: Nangis muncul di T={phaseTime:F1}s setelah Demam 10 detik. Efek Demam dihentikan.</color>");
+                    lastCryOnsetLog = phaseTime;
+                }
+            }
+            // Phase 4: Demam (T = 30s - 40s)
+            else if (phaseTime >= demamOnset)
+            {
+                activeSymptoms.Add(Symptom.Demam);
+                if (lastDemamOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 4: Demam muncul di T={phaseTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastDemamOnsetLog = phaseTime;
+                }
+            }
+            // Phase 3: Sesak Nafas (T = 20s - 30s)
+            else if (phaseTime >= pn_onset_sesak)
+            {
+                activeSymptoms.Add(Symptom.SesakNafas);
+                if (lastSesakOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 3: Sesak Nafas muncul di T={phaseTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastSesakOnsetLog = phaseTime;
+                }
+            }
+            // Phase 2: Batuk Berdahak (T = 10s - 20s)
+            else if (phaseTime >= pn_onset_batuk_berdahak)
+            {
+                activeSymptoms.Add(Symptom.BatukBerdahak);
+                if (lastBatukBerdahakOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 2: Batuk Berdahak muncul di T={phaseTime:F1}s. Gejala sebelumnya dihentikan.</color>");
+                    lastBatukBerdahakOnsetLog = phaseTime;
+                }
+            }
+            // Phase 1: Pilek (T = 0s - 10s)
+            else if (phaseTime >= pn_onset_pilek)
+            {
+                activeSymptoms.Add(Symptom.Pilek);
+                if (lastPilekOnsetLog < 0)
+                {
+                    Debug.Log($"<color=yellow>[SYMPTOM ONSET] Phase 1: Pilek muncul di T={phaseTime:F1}s</color>");
+                    lastPilekOnsetLog = phaseTime;
                 }
             }
         }
@@ -363,13 +441,12 @@ public class BabyBehavior : MonoBehaviour
         temperature = 37f;
 
         // Reset onset tracking
-        lastPilekOnsetLog = -1f;
-        lastBatukBerdahakOnsetLog = -1f;
-        lastSesakOnsetLog = -1f;
-        lastDemamOnsetLog = -1f;
-        lastCryOnsetLog = -1f;
+        ResetOnsetLogs();
+        cc_onset_cry_calculated = -1f;
         pn_onset_demam_calculated = -1f;
         pn_onset_cry_calculated = -1f;
+        lastCommonColdCycleIndex = -1;
+        lastPneumoniaCycleIndex = -1;
 
         Debug.Log($"\n<color=yellow>[INFECTION] Bayi terkena PENYAKIT BIASA</color> | Durasi: {commonColdDuration}s\n");
         lastDisease = currentDisease;
@@ -387,13 +464,12 @@ public class BabyBehavior : MonoBehaviour
         temperature = 38.5f;
 
         // Reset onset tracking untuk log fresh & demam delay
-        lastPilekOnsetLog = -1f;
-        lastBatukBerdahakOnsetLog = -1f;
-        lastSesakOnsetLog = -1f;
-        lastDemamOnsetLog = -1f;
-        lastCryOnsetLog = -1f;
+        ResetOnsetLogs();
+        cc_onset_cry_calculated = -1f;
         pn_onset_demam_calculated = -1f;
         pn_onset_cry_calculated = -1f;
+        lastCommonColdCycleIndex = -1;
+        lastPneumoniaCycleIndex = -1;
 
         Debug.Log($"\n<color=red>[INFECTION] Bayi terkena PNEUMONIA</color> | Durasi: {pneumoniaDuration}s\n");
         lastDisease = currentDisease;
@@ -416,14 +492,80 @@ public class BabyBehavior : MonoBehaviour
             diseaseElapsedTime = 0f;
             activeSymptoms.Clear();
             temperature = 36.5f;
+            ResetOnsetLogs();
+            lastCommonColdCycleIndex = -1;
+            lastPneumoniaCycleIndex = -1;
             lastDisease = currentDisease;
         }
     }
 
     // ============ HELPER METHODS ============
+    private bool IsInitialRestTimeComplete()
+    {
+        if (initialRestDuration <= 0f)
+        {
+            return true;
+        }
+
+        return initialRestStartedAt >= 0f && Time.time - initialRestStartedAt >= initialRestDuration;
+    }
+
+    private float GetLoopedElapsedTime(float cycleDuration)
+    {
+        if (cycleDuration <= 0f)
+        {
+            return diseaseElapsedTime;
+        }
+
+        return Mathf.Repeat(diseaseElapsedTime, cycleDuration);
+    }
+
+    private void ResetPhaseLogsIfNewCycle(ref int lastCycleIndex, float cycleDuration)
+    {
+        int currentCycleIndex = cycleDuration > 0f ? Mathf.FloorToInt(diseaseElapsedTime / cycleDuration) : 0;
+        if (currentCycleIndex == lastCycleIndex)
+        {
+            return;
+        }
+
+        ResetOnsetLogs();
+        lastCycleIndex = currentCycleIndex;
+    }
+
+    private void ResetOnsetLogs()
+    {
+        lastPilekOnsetLog = -1f;
+        lastBatukOnsetLog = -1f;
+        lastBatukBerdahakOnsetLog = -1f;
+        lastSesakOnsetLog = -1f;
+        lastDemamOnsetLog = -1f;
+        lastCryOnsetLog = -1f;
+    }
+
     public bool HasSymptom(Symptom symptom)
     {
         return activeSymptoms.Contains(symptom);
+    }
+
+    public float GetCommonColdCryOnsetTime()
+    {
+        if (cc_onset_cry_calculated < 0f)
+        {
+            cc_onset_cry_calculated = cc_onset_batuk + cc_onset_cry_delay;
+        }
+
+        return cc_onset_cry_calculated;
+    }
+
+    public float GetCommonColdCycleDuration()
+    {
+        return GetCommonColdCryOnsetTime() + cc_cry_duration;
+    }
+
+    public bool IsCommonColdCryPhase()
+    {
+        return currentDisease == DiseaseState.CommonCold &&
+               GetLoopedElapsedTime(GetCommonColdCycleDuration()) >= GetCommonColdCryOnsetTime();
     }
 
     public float GetPneumoniaDemamOnsetTime()
@@ -448,18 +590,35 @@ public class BabyBehavior : MonoBehaviour
 
     public bool IsPneumoniaCryPhase()
     {
-        return currentDisease == DiseaseState.Pneumonia && diseaseElapsedTime >= GetPneumoniaCryOnsetTime();
+        return currentDisease == DiseaseState.Pneumonia &&
+               GetLoopedElapsedTime(GetPneumoniaCycleDuration()) >= GetPneumoniaCryOnsetTime();
+    }
+
+    public bool IsPneumoniaSesakPhase()
+    {
+        if (currentDisease != DiseaseState.Pneumonia)
+        {
+            return false;
+        }
+
+        float phaseTime = GetLoopedElapsedTime(GetPneumoniaCycleDuration());
+        return phaseTime >= pn_onset_sesak && phaseTime < GetPneumoniaDemamOnsetTime();
+    }
+
+    public float GetPneumoniaCycleDuration()
+    {
+        return GetPneumoniaCryOnsetTime() + pn_cry_duration;
     }
 
     public bool ShouldPlayCryAnimation()
     {
-        if (IsPneumoniaCryPhase())
+        if (IsCommonColdCryPhase() || IsPneumoniaCryPhase())
         {
             return true;
         }
 
-        // Saat pneumonia, cry dikunci sampai fase Demam berjalan 10 detik.
-        return currentDisease != DiseaseState.Pneumonia && health < criticalHealthThreshold;
+        // Saat sakit, cry dikunci sampai fase nangis agar flow tidak meloncat.
+        return currentDisease == DiseaseState.None && health < criticalHealthThreshold;
     }
 
     public float GetDiseaseSeverity()

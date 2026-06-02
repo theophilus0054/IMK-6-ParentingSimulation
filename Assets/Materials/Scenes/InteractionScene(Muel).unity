@@ -3276,12 +3276,17 @@ MonoBehaviour:
   commonColdDuration: 60
   pneumoniaDuration: 300
   cc_onset_pilek: 0
-  cc_onset_batuk: 5
+  cc_onset_batuk: 10
+  cc_onset_cry_delay: 10
+  cc_cry_duration: 10
   pn_onset_pilek: 0
   pn_onset_batuk_berdahak: 10
   pn_onset_sesak: 20
   pn_onset_demam_delay: 10
   pn_onset_cry_delay: 10
+  pn_cry_duration: 10
+  initialRestDuration: 10
+  autoInfectCommonColdAfterRest: 1
   diseaseChancePerSecond: 0.001
 --- !u!114 &163216270
 MonoBehaviour:
@@ -66525,11 +66530,16 @@ MonoBehaviour:
   pneumoniaDuration: 300
   cc_onset_pilek: 0
   cc_onset_batuk: 10
+  cc_onset_cry_delay: 10
+  cc_cry_duration: 10
   pn_onset_pilek: 0
   pn_onset_batuk_berdahak: 10
   pn_onset_sesak: 20
   pn_onset_demam_delay: 10
   pn_onset_cry_delay: 10
+  pn_cry_duration: 10
+  initialRestDuration: 10
+  autoInfectCommonColdAfterRest: 1
   diseaseChancePerSecond: 0.001
 --- !u!114 &5839998302148702327
 MonoBehaviour:
