@@ -277,7 +277,9 @@ public class Book : MonoBehaviour {
     }
     public void DragRightPageToPoint(Vector3 point)
     {
-        if (currentPage >= bookPages.Length) return;
+        // KODE BARU: Cegah drag jika sudah mencapai 2 halaman terakhir
+        if (currentPage >= bookPages.Length - 2) return; 
+        
         pageDragging = true;
         mode = FlipMode.RightToLeft;
         f = point;
@@ -290,7 +292,6 @@ public class Book : MonoBehaviour {
         Left.transform.position = RightNext.transform.position;
         Left.transform.eulerAngles = new Vector3(0, 0, 0);
 
-        // PERBAIKAN 1: Pengaman index halaman
         Left.sprite = (currentPage >= 0 && currentPage < bookPages.Length) ? bookPages[currentPage] : background;
 
         Left.transform.SetAsFirstSibling();
@@ -299,10 +300,8 @@ public class Book : MonoBehaviour {
         Right.transform.position = RightNext.transform.position;
         Right.transform.eulerAngles = new Vector3(0, 0, 0);
 
-        // PERBAIKAN 2: Pengaman index halaman + 1
         Right.sprite = (currentPage + 1 >= 0 && currentPage + 1 < bookPages.Length) ? bookPages[currentPage + 1] : background;
 
-        // PERBAIKAN 3: Pengaman index halaman + 2
         RightNext.sprite = (currentPage + 2 >= 0 && currentPage + 2 < bookPages.Length) ? bookPages[currentPage + 2] : background;
 
         LeftNext.transform.SetAsFirstSibling();
@@ -317,7 +316,10 @@ public class Book : MonoBehaviour {
     }
     public void DragLeftPageToPoint(Vector3 point)
     {
-        if (currentPage <= 0) return;
+        // KODE BARU: Cegah drag mundur jika saat ini sedang berada di halaman 2
+        // Ini akan memblokir pemain agar tidak bisa kembali ke halaman 0 (awal)
+        if (currentPage <= 2) return;
+        
         pageDragging = true;
         mode = FlipMode.LeftToRight;
         f = point;
@@ -328,7 +330,6 @@ public class Book : MonoBehaviour {
         Right.gameObject.SetActive(true);
         Right.transform.position = LeftNext.transform.position;
 
-        // PERBAIKAN 1: Mencegah error jika currentPage melebihi jumlah halaman
         Right.sprite = (currentPage - 1 < bookPages.Length) ? bookPages[currentPage - 1] : background;
 
         Right.transform.eulerAngles = new Vector3(0, 0, 0);
@@ -339,10 +340,8 @@ public class Book : MonoBehaviour {
         Left.transform.position = LeftNext.transform.position;
         Left.transform.eulerAngles = new Vector3(0, 0, 0);
 
-        // PERBAIKAN 2: Pengaman tambahan
         Left.sprite = (currentPage >= 2 && currentPage - 2 < bookPages.Length) ? bookPages[currentPage - 2] : background;
 
-        // PERBAIKAN 3: Pengaman tambahan
         LeftNext.sprite = (currentPage >= 3 && currentPage - 3 < bookPages.Length) ? bookPages[currentPage - 3] : background;
 
         RightNext.transform.SetAsFirstSibling();
