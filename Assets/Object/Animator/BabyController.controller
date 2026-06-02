@@ -21,7 +21,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -5247844004079366253, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_Motion: {fileID: 7400000, guid: 881f63be2d4ae674e8ce74b0eece6019, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -69,7 +69,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 3216834841263059847, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_Motion: {fileID: 7400000, guid: 35d745f2f7d0d874b9de516903cd093a, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -96,7 +96,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -5247844004079366253, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_Motion: {fileID: 7400000, guid: 2023c93680c172541a4e16d87fa0245b, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -145,7 +145,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -3827373967534732601, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_Motion: {fileID: 7400000, guid: 1d813c369d2a42848bd2bb978da7b873, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -258,7 +258,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: 'Fast breath '
+  m_Name: Fast breath
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -272,7 +272,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -8211710580962304773, guid: 24309f64599d616449bd42c0512fa536, type: 3}
+  m_Motion: {fileID: 7400000, guid: bc80a5e53f0be1740927b8101b8c4370, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

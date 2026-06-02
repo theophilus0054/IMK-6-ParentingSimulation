@@ -6,13 +6,16 @@ public class BabyAnimator : MonoBehaviour
     private Animator animator;
     private BabyBehavior babyBehavior;
     private string currentAnimationState;
-    
+
     private BabyBehavior.DiseaseState lastLoggedDisease = BabyBehavior.DiseaseState.None;
-    
+
     [Header("Effect Objects")]
     public GameObject thermometerObject;
     public GameObject oximeterObject;
-    public ParticleSystem greenYellowParticle;
+
+    [Header("Particle Systems")]
+    public ParticleSystem pilekParticle;              // Untuk Pilek (ringan, hidung berair)
+    public ParticleSystem coughSputumParticle;        // Untuk Batuk Berdahak (intensif, dahak hijau/kuning)
 
     [Header("Animator State Names")]
     [SerializeField] private string layBreathState = "Lay breath";
@@ -47,7 +50,7 @@ public class BabyAnimator : MonoBehaviour
         }
 
         Debug.Log($"<color=cyan>[ANIM] Playing: <b>{stateName}</b></color>");
-        animator.Play(stateName);
+        animator.CrossFade(stateName, 0.25f, 0);
         currentAnimationState = stateName;
     }
 
@@ -66,22 +69,23 @@ public class BabyAnimator : MonoBehaviour
         // Map symptoms ke animation
         string animState = layBreathState; // Default
 
-        if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
+        // Prioritas tertinggi: Crying -> Demam (Rewel) -> Sesak (Fast Breath) -> Batuk
+        if (babyBehavior.ShouldPlayCryAnimation())
         {
-            animState = fastBreathState;
+            animState = cryingState;
         }
         else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam))
         {
             animState = rewelState;
         }
-        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak) || 
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas))
+        {
+            animState = fastBreathState;
+        }
+        else if (babyBehavior.HasSymptom(BabyBehavior.Symptom.BatukBerdahak) ||
                  babyBehavior.HasSymptom(BabyBehavior.Symptom.Batuk))
         {
             animState = coughState;
-        }
-        else if (babyBehavior.health < babyBehavior.criticalHealthThreshold)
-        {
-            animState = cryingState;
         }
 
         PlayAnimationState(animState);
@@ -92,32 +96,57 @@ public class BabyAnimator : MonoBehaviour
         bool hasSesak = babyBehavior.HasSymptom(BabyBehavior.Symptom.SesakNafas);
         bool hasDemam = babyBehavior.HasSymptom(BabyBehavior.Symptom.Demam);
 
-        // Pilek/Batuk Berdahak → Green/Yellow Particle
-        if (hasPilek || hasBatukBerdahak)
+        // ========== PILEK PARTICLE ==========
+        // Pilek → Hanya saat "Lay breath" (animasi normal)
+        // Matikan pilek saat animasi lain (Cough, Rewel, Fast breath, Crying)
+        bool isPilekAllowed = (currentAnimationState == layBreathState);
+
+        if (hasPilek && isPilekAllowed && !hasBatukBerdahak)
         {
-            if (greenYellowParticle != null && !greenYellowParticle.isPlaying)
+            SetEffectActive(pilekParticle?.gameObject, true);
+            if (pilekParticle != null && !pilekParticle.isPlaying)
             {
-                greenYellowParticle.Play();
+                pilekParticle.Play();
+                Debug.Log("[PARTICLE] Pilek ON (Lay breath state)");
             }
-            SetEffectActive(greenYellowParticle?.gameObject, true);
         }
-        else if (greenYellowParticle != null && greenYellowParticle.isPlaying)
+        else if (pilekParticle != null && (pilekParticle.isPlaying || pilekParticle.gameObject.activeSelf))
         {
-            greenYellowParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            SetEffectActive(greenYellowParticle.gameObject, false);
+            pilekParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            SetEffectActive(pilekParticle.gameObject, false);
+        }
+
+        // ========== BATUK BERDAHAK PARTICLE ==========
+        // Batuk Berdahak → Intensif, cepat, dari mulut (dahak tebal)
+        bool isCoughAllowed = (currentAnimationState == coughState);
+
+        if (hasBatukBerdahak && isCoughAllowed)
+        {
+            SetEffectActive(coughSputumParticle?.gameObject, true);
+            if (coughSputumParticle != null && !coughSputumParticle.isPlaying)
+            {
+                coughSputumParticle.Play();
+            }
+        }
+        else if (coughSputumParticle != null && (coughSputumParticle.isPlaying || coughSputumParticle.gameObject.activeSelf))
+        {
+            coughSputumParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            SetEffectActive(coughSputumParticle.gameObject, false);
         }
 
         // Sesak Nafas → Oximeter ON
-        SetEffectActive(oximeterObject, hasSesak);
+        bool isSesakAllowed = (currentAnimationState == fastBreathState);
+        SetEffectActive(oximeterObject, hasSesak && isSesakAllowed);
 
         // Demam → Thermometer ON
-        SetEffectActive(thermometerObject, hasDemam);
+        bool isDemamAllowed = (currentAnimationState == rewelState);
+        SetEffectActive(thermometerObject, hasDemam && isDemamAllowed);
     }
 
     private void SetEffectActive(GameObject target, bool isActive)
     {
         if (target == null) return;
-        
+
         if (target.activeSelf != isActive)
         {
             target.SetActive(isActive);
