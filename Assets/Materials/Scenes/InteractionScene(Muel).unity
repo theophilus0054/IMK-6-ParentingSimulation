@@ -3263,8 +3263,8 @@ MonoBehaviour:
   health: 100
   temperature: 38.5
   oxygenLevel: 100
-  currentDisease: 2
-  activeSymptoms: 01000000
+  currentDisease: 0
+  activeSymptoms: 
   diseaseElapsedTime: 0
   diseaseProgressionChance: 0.1
   feverThreshold: 37.5
@@ -34253,8 +34253,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19e0bd5f879f8954baed0fb090f49f05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BookPageUIManager
-  bookScript: {fileID: 0}
-  pagePanels: []
 --- !u!4 &1876115010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7939995439548375709, guid: 8d0b0f2cf97398c4daae2748aeb426c6, type: 3}
