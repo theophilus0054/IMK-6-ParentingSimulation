@@ -28,8 +28,6 @@ public class SaveLoadManager : MonoBehaviour
     public class SaveData
     {
         public int version = SAVE_VERSION;
-        public int day;
-        public int phaseIndex;
         public float babyHealth;           // Health (0-100)
         public float babyOxygenLevel;      // Oxygen level (0-100)
         public float babyTemperature;
@@ -56,8 +54,6 @@ public class SaveLoadManager : MonoBehaviour
             SaveData data = new SaveData
             {
                 version = SAVE_VERSION,
-                day = gm.currentDay,
-                phaseIndex = 0,
                 babyHealth = Mathf.Clamp(baby.health, 0f, 100f),
                 babyOxygenLevel = Mathf.Clamp(baby.oxygenLevel, 0f, 100f),
                 babyTemperature = Mathf.Clamp(baby.temperature, 36f, 41f),
@@ -68,7 +64,7 @@ public class SaveLoadManager : MonoBehaviour
 
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(saveFilePath, json);
-            Debug.Log($"[SaveLoad] Game Saved! Day {data.day}, Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
+            Debug.Log($"[SaveLoad] Game Saved! Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
         }
         catch (System.Exception e)
         {
@@ -105,9 +101,6 @@ public class SaveLoadManager : MonoBehaviour
                 return;
             }
 
-            // Validate data ranges
-            gm.currentDay = Mathf.Max(1, data.day);
-            gm.currentPhase = GameManager.GamePhase.Neonatal;
             baby.health = Mathf.Clamp(data.babyHealth, 0f, 100f);
             baby.oxygenLevel = Mathf.Clamp(data.babyOxygenLevel, 0f, 100f);
             baby.temperature = Mathf.Clamp(data.babyTemperature, 36f, 41f);
@@ -123,7 +116,7 @@ public class SaveLoadManager : MonoBehaviour
                 baby.currentDisease = BabyBehavior.DiseaseState.None;
             }
 
-            Debug.Log($"[SaveLoad] Game Loaded! Day {data.day}, Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
+            Debug.Log($"[SaveLoad] Game Loaded! Health: {data.babyHealth:F0}%, Oxygen: {data.babyOxygenLevel:F0}%");
         }
         catch (System.Exception e)
         {

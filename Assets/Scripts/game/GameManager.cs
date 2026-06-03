@@ -1,20 +1,13 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public enum GamePhase { Neonatal }
     public enum GameState { Menu, Playing, Paused, Feedback, GameOver }
 
-    [Header("Game Progression")]
-    public GamePhase currentPhase = GamePhase.Neonatal;
+    [Header("Game State")]
     public GameState currentState = GameState.Menu;
-    public int currentDay = 1;
-    
-    [Header("Phase Configuration")]
-    public int neonatalPhaseDays = 7;
 
     [Header("References")]
     public BabyBehavior babyBehavior;
@@ -51,82 +44,58 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        Time.timeScale = 1f;
         currentState = GameState.Playing;
-        currentDay = 1;
-        currentPhase = GamePhase.Neonatal;
         // uiManager.ShowGameplayHUD();
-        StartDayLoop();
+        StartSimulation();
     }
 
-    public void StartDayLoop()
+    public void StartSimulation()
     {
-        if (babyBehavior == null || saveLoadManager == null)
+        if (babyBehavior == null)
         {
-            Debug.LogError("[GameManager] BabyBehavior atau SaveLoadManager tidak siap!");
+            Debug.LogError("[GameManager] BabyBehavior tidak siap!");
             return;
         }
 
-        Debug.Log($"[GAMEDAY] Memulai Hari ke-{currentDay} di fase {currentPhase}");
+        Debug.Log("[GAME] Simulasi dimulai.");
         currentState = GameState.Playing;
-        
-        // Reset status bayi untuk hari baru (kecuali hari pertama)
-        if (currentDay > 1)
-        {
-            saveLoadManager.LoadGame();
-        }
+    }
+
+    // Dipertahankan agar Button/UnityEvent lama yang masih memanggil StartDayLoop tidak error.
+    public void StartDayLoop()
+    {
+        StartSimulation();
     }
 
     public void EndDay()
     {
-        if (babyBehavior == null || saveLoadManager == null)
+        if (babyBehavior == null)
         {
-            Debug.LogError("[GameManager] Cannot end day - missing references!");
+            Debug.LogError("[GameManager] Cannot evaluate simulation - missing BabyBehavior!");
             return;
         }
 
         currentState = GameState.Feedback;
-        
-        // Cek apakah pemain lolos level hari ini (berdasarkan status bayi)
-        bool passLevel = babyBehavior.IsBabySafe();
-        if (passLevel)
-        {
-            Debug.Log($"[GAMEDAY] Hari {currentDay} sukses dilewati!");
-            // uiManager.ShowFeedback(true);
-            
-            // Simpan progress
-            saveLoadManager.SaveGame();
-            
-            currentDay++;
-            int maxDays = GetMaxDaysForPhase();
 
-            if (currentDay > maxDays)
+        if (babyBehavior.IsBabySafe())
+        {
+            Debug.Log("[GAME] Kondisi bayi aman.");
+            // uiManager.ShowFeedback(true);
+
+            if (saveLoadManager != null)
             {
-                AdvanceToNextPhase();
+                saveLoadManager.SaveGame();
             }
-            else
-            {
-                // Lanjut ke hari berikutnya
-                Invoke(nameof(StartDayLoop), 3f); // Delay 3 detik sebelum hari baru
-            }
+
+            currentState = GameState.Playing;
         }
         else
         {
-            Debug.Log($"[GAMEDAY] Kondisi bayi memburuk. Game Over.");
+            Debug.Log("[GAME] Kondisi bayi memburuk. Game Over.");
             // uiManager.ShowFeedback(false);
             GameOver();
         }
-    }
-
-    private int GetMaxDaysForPhase()
-    {
-        return neonatalPhaseDays;
-    }
-
-    private void AdvanceToNextPhase()
-    {
-        Debug.Log("[GAMEDAY] ===== FASE NEONATAL SELESAI! =====");
-        currentState = GameState.GameOver;
-        // TODO: Tampilkan ringkasan akhir, fun fact, atau layar selesai permainan.
     }
 
     public void PauseGame()
@@ -135,7 +104,7 @@ public class GameManager : MonoBehaviour
         {
             currentState = GameState.Paused;
             Time.timeScale = 0f;
-            Debug.Log("[GAMEDAY] Game Paused");
+            Debug.Log("[GAME] Game Paused");
         }
     }
 
@@ -145,7 +114,7 @@ public class GameManager : MonoBehaviour
         {
             currentState = GameState.Playing;
             Time.timeScale = 1f;
-            Debug.Log("[GAMEDAY] Game Resumed");
+            Debug.Log("[GAME] Game Resumed");
         }
     }
 
@@ -153,7 +122,7 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.GameOver;
         Time.timeScale = 0f; // Pause the game
-        Debug.Log("[GAMEDAY] GAME OVER!");
+        Debug.Log("[GAME] GAME OVER!");
         // uiManager.ShowGameOverMenu();
     }
 }
