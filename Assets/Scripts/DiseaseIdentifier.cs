@@ -14,6 +14,10 @@ public class DiseaseIdentifier : MonoBehaviour
     public Button sesakNapasButton;
     public Button pilekButton;
 
+    [Header("Button Keputusan")]
+    public Button selfCareSubmitButton;
+    public Button doctorSubmitButton;
+
     [Header("Warna Button")]
     public Color selectedButtonColor = new Color(0.5f, 0.5f, 0.5f, 1f);
     public Color unselectedButtonColor = new Color(1f, 1f, 1f, 0f);
@@ -21,6 +25,8 @@ public class DiseaseIdentifier : MonoBehaviour
     [Header("Panel Feedback")]
     public GameObject feedbackPanel;
     public TMP_Text feedbackText;
+    public TMP_Text feedbackTitleText;
+    public TMP_Text feedbackRecommendationText;
 
     [Header("Posisi Panel")]
     public Transform playerCamera;
@@ -32,6 +38,7 @@ public class DiseaseIdentifier : MonoBehaviour
     private bool batukBerdahak;
     private bool sesakNapas;
     private bool pilek;
+    private RectTransform feedbackCard;
     private float lastDemamClickTime = -1f;
     private float lastBatukClickTime = -1f;
     private float lastBatukBerdahakClickTime = -1f;
@@ -49,12 +56,15 @@ public class DiseaseIdentifier : MonoBehaviour
         }
 
         RegisterButtonListeners();
+        RegisterSubmitButtonListeners();
+        SetupFeedbackLayout();
         UpdateAllButtonColors();
     }
 
     private void OnDestroy()
     {
         UnregisterButtonListeners();
+        UnregisterSubmitButtonListeners();
     }
 
     private void RegisterButtonListeners()
@@ -88,6 +98,64 @@ public class DiseaseIdentifier : MonoBehaviour
             pilekButton.onClick.RemoveListener(TogglePilek);
             pilekButton.onClick.AddListener(TogglePilek);
         }
+    }
+
+    private void RegisterSubmitButtonListeners()
+    {
+        if (selfCareSubmitButton == null)
+        {
+            selfCareSubmitButton = FindButtonByName("Submit (1)");
+        }
+
+        if (doctorSubmitButton == null)
+        {
+            doctorSubmitButton = FindButtonByName("Submit (2)");
+        }
+
+        if (selfCareSubmitButton != null)
+        {
+            if (selfCareSubmitButton.onClick.GetPersistentEventCount() == 0)
+            {
+                selfCareSubmitButton.onClick.RemoveListener(SubmitSelfCare);
+                selfCareSubmitButton.onClick.AddListener(SubmitSelfCare);
+            }
+        }
+
+        if (doctorSubmitButton != null)
+        {
+            if (doctorSubmitButton.onClick.GetPersistentEventCount() == 0)
+            {
+                doctorSubmitButton.onClick.RemoveListener(SubmitDoctor);
+                doctorSubmitButton.onClick.AddListener(SubmitDoctor);
+            }
+        }
+    }
+
+    private void UnregisterSubmitButtonListeners()
+    {
+        if (selfCareSubmitButton != null)
+        {
+            selfCareSubmitButton.onClick.RemoveListener(SubmitSelfCare);
+        }
+
+        if (doctorSubmitButton != null)
+        {
+            doctorSubmitButton.onClick.RemoveListener(SubmitDoctor);
+        }
+    }
+
+    private Button FindButtonByName(string objectName)
+    {
+        Button[] buttons = Resources.FindObjectsOfTypeAll<Button>();
+        foreach (Button button in buttons)
+        {
+            if (button != null && button.name == objectName)
+            {
+                return button;
+            }
+        }
+
+        return null;
     }
 
     private void UnregisterButtonListeners()
@@ -178,6 +246,26 @@ public class DiseaseIdentifier : MonoBehaviour
 
     public void SubmitIdentifikasi()
     {
+        ShowFeedback(
+            "Pilih Tindakan",
+            "pilih salah satu: Self-care atau bawa ke dokter",
+            "Setelah mengamati gejala bayi, tentukan apakah kondisinya cukup dirawat mandiri atau membutuhkan penanganan dokter.",
+            new Color(0.25f, 0.49f, 0.66f, 1f),
+            false);
+    }
+
+    public void SubmitSelfCare()
+    {
+        SubmitTreatmentChoice(TreatmentChoice.SelfCare);
+    }
+
+    public void SubmitDoctor()
+    {
+        SubmitTreatmentChoice(TreatmentChoice.Doctor);
+    }
+
+    private void SubmitTreatmentChoice(TreatmentChoice choice)
+    {
         if (babyBehavior == null)
         {
             Debug.LogError("[DiseaseIdentifier] BabyBehavior belum di-assign!");
@@ -186,40 +274,204 @@ public class DiseaseIdentifier : MonoBehaviour
 
         BabyBehavior.DiseaseState penyakitBayiSaatIni = babyBehavior.currentDisease;
         BabyBehavior.DiseaseState jawabanUser = GetJawabanUserDariChecklist();
+        TreatmentChoice expectedChoice = GetExpectedTreatment(penyakitBayiSaatIni);
 
         Debug.Log("=== SUBMIT IDENTIFIKASI ===");
         Debug.Log("State penyakit bayi saat submit: " + penyakitBayiSaatIni);
         Debug.Log("Jawaban user: " + jawabanUser);
+        Debug.Log("Tindakan user: " + choice);
+        Debug.Log("Tindakan seharusnya: " + expectedChoice);
 
-        bool jawabanBenar =
-            jawabanUser == penyakitBayiSaatIni &&
-            penyakitBayiSaatIni != BabyBehavior.DiseaseState.None;
-
-        // Panel muncul setiap kali submit, baik benar maupun salah
-        if (feedbackPanel != null)
+        if (penyakitBayiSaatIni == BabyBehavior.DiseaseState.CommonCold && choice == TreatmentChoice.Doctor)
         {
-            PlacePanelInFrontOfPlayer(feedbackPanel, feedbackDistance, feedbackOffset);
-            feedbackPanel.SetActive(true);
+            ShowFeedback(
+                "Penanganan Berlebihan ❌",
+                "seharusnya pilih : Self-care",
+                "Bayi hanya mengalami demam ringan biasa. Membawanya ke rumah sakit justru berisiko memaparkannya pada virus lain.",
+                new Color(1f, 0.3f, 0.08f, 1f),
+                false);
+            return;
         }
 
-        if (jawabanBenar)
+        if (penyakitBayiSaatIni == BabyBehavior.DiseaseState.Pneumonia && choice == TreatmentChoice.SelfCare)
+        {
+            ShowFeedback(
+                "Kondisi Kritis Terabaikan ❌",
+                "seharusnya pilih : bawa ke dokter",
+                "Gejala seperti sesak napas dan demam tinggi adalah tanda bahaya (Red Flags). Perawatan mandiri di rumah tidak lagi cukup. Bayi harus segera mendapatkan penanganan medis dan bantuan darurat di rumah sakit!",
+                new Color(1f, 0.3f, 0.08f, 1f),
+                false);
+            return;
+        }
+
+        if (expectedChoice != TreatmentChoice.None && choice == expectedChoice)
         {
             Debug.Log("<color=green>Identifikasi benar!</color>");
-
-            if (feedbackText != null)
-            {
-                feedbackText.text = "Identifikasi benar!";
-            }
+            ShowFeedback(
+                "Keputusan Tepat ⭐",
+                "Tindakanmu berhasil menyelamatkan kondisi bayi",
+                "Tahukah kamu? Pneumonia adalah penyakit infeksi pembunuh nomor 1 pada anak balita di seluruh dunia! Penyakit ini menyumbang belasan persen dari total kematian anak di bawah usia 5 tahun setiap tahunnya. Kecepatan dan ketepatan observasimu sebagai orang tua sangat krusial untuk menyelamatkan nyawa mereka.",
+                new Color(0.43f, 0.64f, 0.25f, 1f),
+                true);
         }
         else
         {
             Debug.Log("<color=red>Identifikasi salah.</color>");
+            ShowFeedback(
+                "Observasi Belum Tepat ❌",
+                "periksa lagi tanda-tanda bayi",
+                "Kondisi bayi belum cukup jelas dari pilihanmu. Perhatikan kembali suhu, napas, batuk, pilek, dan tanda bahaya sebelum menentukan tindakan.",
+                new Color(1f, 0.3f, 0.08f, 1f),
+                false);
+        }
+    }
 
-            if (feedbackText != null)
+    private TreatmentChoice GetExpectedTreatment(BabyBehavior.DiseaseState disease)
+    {
+        if (disease == BabyBehavior.DiseaseState.CommonCold)
+        {
+            return TreatmentChoice.SelfCare;
+        }
+
+        if (disease == BabyBehavior.DiseaseState.Pneumonia)
+        {
+            return TreatmentChoice.Doctor;
+        }
+
+        return TreatmentChoice.None;
+    }
+
+    private void ShowFeedback(string title, string recommendation, string body, Color accentColor, bool isCorrect)
+    {
+        if (feedbackPanel != null)
+        {
+            SetupFeedbackLayout();
+            PlacePanelInFrontOfPlayer(feedbackPanel, feedbackDistance, feedbackOffset);
+            feedbackPanel.SetActive(true);
+        }
+
+        if (feedbackTitleText != null)
+        {
+            feedbackTitleText.text = title;
+        }
+
+        if (feedbackRecommendationText != null)
+        {
+            feedbackRecommendationText.text = recommendation;
+            feedbackRecommendationText.color = accentColor;
+        }
+
+        if (feedbackText != null)
+        {
+            feedbackText.text = body;
+        }
+    }
+
+    private void SetupFeedbackLayout()
+    {
+        if (feedbackPanel == null)
+        {
+            return;
+        }
+
+        Image panelImage = feedbackPanel.GetComponent<Image>();
+        if (panelImage != null)
+        {
+            panelImage.color = new Color(0.78f, 0.94f, 0.95f, 1f);
+            panelImage.raycastTarget = true;
+        }
+
+        feedbackCard = EnsureRectChild(feedbackPanel.transform, "Feedback Card", new Vector2(0.08f, 0.14f), new Vector2(0.92f, 0.74f));
+        Image cardImage = feedbackCard.GetComponent<Image>();
+        if (cardImage == null)
+        {
+            cardImage = feedbackCard.gameObject.AddComponent<Image>();
+        }
+
+        cardImage.color = new Color(0.99f, 0.97f, 0.97f, 1f);
+        cardImage.raycastTarget = false;
+
+        feedbackTitleText = EnsureTextChild(feedbackPanel.transform, feedbackTitleText, "Feedback Title", new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.98f), 38f, FontStyles.Bold, TextAlignmentOptions.Center);
+        feedbackRecommendationText = EnsureTextChild(feedbackCard, feedbackRecommendationText, "Feedback Recommendation", new Vector2(0.08f, 0.64f), new Vector2(0.92f, 0.9f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+
+        if (feedbackText == null)
+        {
+            feedbackText = EnsureTextChild(feedbackCard, feedbackText, "Feedback Body", new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.58f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+        }
+        else
+        {
+            feedbackText.transform.SetParent(feedbackCard, false);
+            ConfigureTextRect(feedbackText.GetComponent<RectTransform>(), new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.58f));
+            ConfigureText(feedbackText, 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+        }
+    }
+
+    private RectTransform EnsureRectChild(Transform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        Transform child = parent.Find(objectName);
+        RectTransform rectTransform;
+
+        if (child == null)
+        {
+            GameObject childObject = new GameObject(objectName, typeof(RectTransform));
+            childObject.transform.SetParent(parent, false);
+            rectTransform = childObject.GetComponent<RectTransform>();
+        }
+        else
+        {
+            rectTransform = child.GetComponent<RectTransform>();
+        }
+
+        ConfigureTextRect(rectTransform, anchorMin, anchorMax);
+        return rectTransform;
+    }
+
+    private TMP_Text EnsureTextChild(Transform parent, TMP_Text currentText, string objectName, Vector2 anchorMin, Vector2 anchorMax, float fontSize, FontStyles fontStyle, TextAlignmentOptions alignment)
+    {
+        TMP_Text text = currentText;
+
+        if (text == null)
+        {
+            Transform existing = parent.Find(objectName);
+            if (existing != null)
             {
-                feedbackText.text = "Identifikasi salah. Coba perhatikan gejala bayi lagi.";
+                text = existing.GetComponent<TMP_Text>();
             }
         }
+
+        if (text == null)
+        {
+            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+            text = textObject.GetComponent<TextMeshProUGUI>();
+        }
+        else
+        {
+            text.transform.SetParent(parent, false);
+        }
+
+        ConfigureTextRect(text.GetComponent<RectTransform>(), anchorMin, anchorMax);
+        ConfigureText(text, fontSize, fontStyle, alignment);
+        return text;
+    }
+
+    private void ConfigureTextRect(RectTransform rectTransform, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        rectTransform.anchorMin = anchorMin;
+        rectTransform.anchorMax = anchorMax;
+        rectTransform.offsetMin = Vector2.zero;
+        rectTransform.offsetMax = Vector2.zero;
+        rectTransform.localScale = Vector3.one;
+    }
+
+    private void ConfigureText(TMP_Text text, float fontSize, FontStyles fontStyle, TextAlignmentOptions alignment)
+    {
+        text.fontSize = fontSize;
+        text.fontStyle = fontStyle;
+        text.alignment = alignment;
+        text.color = Color.black;
+        text.enableWordWrapping = true;
+        text.raycastTarget = false;
     }
 
     private void PlacePanelInFrontOfPlayer(GameObject panel, float distance, Vector3 offset)
@@ -297,5 +549,12 @@ public class DiseaseIdentifier : MonoBehaviour
         }
 
         Debug.Log("Checklist di-reset.");
+    }
+
+    private enum TreatmentChoice
+    {
+        None,
+        SelfCare,
+        Doctor
     }
 }
