@@ -10,6 +10,11 @@ public class GameOverManager : MonoBehaviour
     [Header("Blur / Global Volume")]
     [SerializeField] private Volume globalVolume;
 
+    [Header("Posisi Panel")]
+    [SerializeField] private Transform playerCamera;
+    [SerializeField] private float panelDistance = 1.5f;
+    [SerializeField] private Vector3 panelOffset = new Vector3(0f, -0.1f, 0f);
+
     [Header("Optional: objek yang ingin dimatikan saat game over")]
     [SerializeField] private MonoBehaviour[] disableScripts;
     [SerializeField] private GameObject[] hideObjects;
@@ -18,7 +23,20 @@ public class GameOverManager : MonoBehaviour
 
     private void Start()
     {
-        SetGameOverState(false);
+        isGameOver = false;
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
+    }
+
+    private void Update()
+    {
+        if (!isGameOver && GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.GameOver)
+        {
+            TriggerGameOver();
+        }
     }
 
     public void TriggerGameOver()
@@ -28,11 +46,17 @@ public class GameOverManager : MonoBehaviour
 
         // Aktifkan blur
         if (globalVolume != null)
+        {
             globalVolume.enabled = true;
+            globalVolume.weight = 1f;
+        }
 
         // Tampilkan panel game over
         if (gameOverPanel != null)
+        {
+            PlacePanelInFrontOfPlayer(gameOverPanel);
             gameOverPanel.SetActive(true);
+        }
 
         // Nonaktifkan gameplay jika perlu
         if (disableScripts != null)
@@ -63,7 +87,7 @@ public class GameOverManager : MonoBehaviour
 
         // Matikan blur
         if (globalVolume != null)
-            globalVolume.enabled = false;
+            globalVolume.weight = 0f;
 
         // Aktifkan lagi script gameplay
         if (disableScripts != null)
@@ -82,17 +106,23 @@ public class GameOverManager : MonoBehaviour
         Time.timeScale = 1f;
     }
 
-    private void SetGameOverState(bool state)
+    private void PlacePanelInFrontOfPlayer(GameObject panel)
     {
-        isGameOver = state;
+        Transform cameraTransform = playerCamera;
 
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(state);
+        if (cameraTransform == null && Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
 
-        if (globalVolume != null)
-            globalVolume.enabled = state;
+        if (panel == null || cameraTransform == null)
+        {
+            return;
+        }
 
-        Time.timeScale = state ? 0f : 1f;
+        Vector3 panelPosition = cameraTransform.position + cameraTransform.forward * panelDistance + cameraTransform.TransformVector(panelOffset);
+        panel.transform.position = panelPosition;
+        panel.transform.rotation = Quaternion.LookRotation(panelPosition - cameraTransform.position, Vector3.up);
     }
 
     public void RestartScene()

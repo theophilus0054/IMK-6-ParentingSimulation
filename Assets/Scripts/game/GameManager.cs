@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     [Header("References")]
     public BabyBehavior babyBehavior;
+    [SerializeField] private GameOverManager gameOverManager;
     private SaveLoadManager saveLoadManager;
     // public UIManager uiManager; // Hubungkan dengan script UI Anda
 
@@ -35,6 +36,10 @@ public class GameManager : MonoBehaviour
         }
 
         saveLoadManager = GetComponent<SaveLoadManager>();
+        if (gameOverManager == null)
+        {
+            gameOverManager = FindObjectOfType<GameOverManager>();
+        }
 
         if (saveLoadManager == null)
         {
@@ -121,6 +126,11 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         currentState = GameState.GameOver;
+        if (gameOverManager != null)
+        {
+            gameOverManager.TriggerGameOver();
+        }
+
         Time.timeScale = 0f; // Pause the game
         Debug.Log("[GAME] GAME OVER!");
         // uiManager.ShowGameOverMenu();

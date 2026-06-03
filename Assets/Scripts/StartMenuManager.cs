@@ -25,8 +25,23 @@ public class StartMenuManager : MonoBehaviour
 
 																			// Setup awal: Gerakan mati, Blur penuh, Panel muncul
 		foreach (var move in movementProviders) if (move != null) move.enabled = false;
-		if (blurVolume != null) blurVolume.weight = 1f;
-		panelCanvasGroup.alpha = 1f;
+		if (blurVolume != null)
+		{
+			blurVolume.enabled = true;
+			blurVolume.weight = 1f;
+		}
+
+		if (startPanelObject != null)
+		{
+			startPanelObject.SetActive(true);
+		}
+
+		if (panelCanvasGroup != null)
+		{
+			panelCanvasGroup.alpha = 1f;
+			panelCanvasGroup.interactable = true;
+			panelCanvasGroup.blocksRaycasts = true;
+		}
 	}
 
 	public void OnStartButtonClicked()
@@ -37,18 +52,35 @@ public class StartMenuManager : MonoBehaviour
 	IEnumerator TransitionRoutine()
 	{
 		// 1. Fade Out Panel (Cepat)
-		while (panelCanvasGroup.alpha > 0)
+		if (panelCanvasGroup != null)
 		{
-			panelCanvasGroup.alpha -= Time.deltaTime * panelFadeSpeed;
-			yield return null;
+			while (panelCanvasGroup.alpha > 0)
+			{
+				panelCanvasGroup.alpha -= Time.unscaledDeltaTime * panelFadeSpeed;
+				yield return null;
+			}
+
+			panelCanvasGroup.alpha = 0f;
+			panelCanvasGroup.interactable = false;
+			panelCanvasGroup.blocksRaycasts = false;
 		}
-		startPanelObject.SetActive(false);
+
+		if (startPanelObject != null)
+		{
+			startPanelObject.SetActive(false);
+		}
 
 		// 2. Fade Out Blur (Perlahan/Lambat)
-		while (blurVolume.weight > 0)
+		if (blurVolume != null)
 		{
-			blurVolume.weight -= Time.deltaTime * blurFadeSpeed;
-			yield return null;
+			blurVolume.enabled = true;
+			while (blurVolume.weight > 0)
+			{
+				blurVolume.weight -= Time.unscaledDeltaTime * blurFadeSpeed;
+				yield return null;
+			}
+
+			blurVolume.weight = 0f;
 		}
 
 		// 3. Aktifkan pergerakan setelah semua bersih
