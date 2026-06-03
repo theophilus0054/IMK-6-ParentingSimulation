@@ -25268,10 +25268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a04c67a441ba294d9fbe23068e75ca1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  currentPhase: 0
   currentState: 1
-  currentDay: 0
-  neonatalPhaseDays: 7
   babyBehavior: {fileID: 163216269}
 --- !u!114 &1553767288
 MonoBehaviour:
