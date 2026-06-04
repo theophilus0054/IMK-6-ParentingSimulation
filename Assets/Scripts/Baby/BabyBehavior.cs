@@ -164,6 +164,28 @@ public class BabyBehavior : MonoBehaviour
     private BabyAnimator babyAnim;
     private BabyAudioCue babyAudio;
 
+    [Header("Fever Visual")]
+    [Tooltip("Masukkan Renderer material kulit bayi di sini. Jangan masukkan baju/aksesoris agar hanya kulit yang memerah.")]
+    public Renderer[] babySkinRenderers;
+    [Tooltip("Matikan jika ingin mengisi Baby Skin Renderers manual dan tidak ingin script mencari renderer child otomatis.")]
+    public bool disableAutoFindBabySkinRenderers = false;
+    [Tooltip("Aktifkan jika kulit juga harus memerah hanya karena suhu melewati Fever Threshold, meskipun symptom Demam belum aktif.")]
+    public bool feverVisualUsesTemperatureThreshold = false;
+    public Color feverSkinColor = new Color(1f, 0.7f, 0.68f, 1f);
+    [Range(0f, 1f)]
+    public float feverSkinMinOpacity = 0.05f;
+    [Range(0f, 1f)]
+    public float feverSkinMaxOpacity = 0.35f;
+    [Min(0f)]
+    public float feverSkinBlinkSpeed = 2f;
+    [Min(0f)]
+    public float feverSkinTintSpeed = 6f;
+
+    private MaterialPropertyBlock[] skinPropertyBlocks;
+    private Color[] normalSkinColors;
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+
     private void Start()
     {
         babyAnim = GetComponent<BabyAnimator>();
@@ -173,6 +195,8 @@ public class BabyBehavior : MonoBehaviour
             Debug.LogError("[BabyBehavior] BabyAnimator component tidak ditemukan!");
         if (babyAudio == null)
             Debug.LogWarning("[BabyBehavior] BabyAudioCue component tidak ditemukan!");
+
+        InitializeFeverVisual();
     }
 
     private void Update()
@@ -184,6 +208,7 @@ public class BabyBehavior : MonoBehaviour
         UpdateDiseaseProgression();
         UpdateSymptoms();
         UpdateVitalSigns();
+        UpdateFeverVisual();
         UpdateAudioCues();
     }
 
@@ -492,6 +517,158 @@ public class BabyBehavior : MonoBehaviour
     {
         if (babyAudio == null) return;
         // Audio triggered otomatis di BabyAudioCue.Update() berdasarkan symptoms
+    }
+
+    private void InitializeFeverVisual()
+    {
+        AutoFindBabySkinRenderersIfNeeded();
+
+        if (babySkinRenderers == null || babySkinRenderers.Length == 0)
+        {
+            return;
+        }
+
+        skinPropertyBlocks = new MaterialPropertyBlock[babySkinRenderers.Length];
+        normalSkinColors = new Color[babySkinRenderers.Length];
+
+        for (int i = 0; i < babySkinRenderers.Length; i++)
+        {
+            Renderer skinRenderer = babySkinRenderers[i];
+            skinPropertyBlocks[i] = new MaterialPropertyBlock();
+            normalSkinColors[i] = Color.white;
+
+            if (skinRenderer == null || skinRenderer.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            Material material = skinRenderer.sharedMaterial;
+            if (material.HasProperty(BaseColorId))
+            {
+                normalSkinColors[i] = material.GetColor(BaseColorId);
+            }
+            else if (material.HasProperty(ColorId))
+            {
+                normalSkinColors[i] = material.GetColor(ColorId);
+            }
+        }
+    }
+
+    private void AutoFindBabySkinRenderersIfNeeded()
+    {
+        if (disableAutoFindBabySkinRenderers || (babySkinRenderers != null && babySkinRenderers.Length > 0))
+        {
+            return;
+        }
+
+        Renderer[] childRenderers = GetComponentsInChildren<Renderer>(true);
+        List<Renderer> candidates = new List<Renderer>();
+
+        foreach (Renderer childRenderer in childRenderers)
+        {
+            if (childRenderer == null || childRenderer.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            if (childRenderer is ParticleSystemRenderer || childRenderer is LineRenderer || childRenderer is TrailRenderer)
+            {
+                continue;
+            }
+
+            if (IsLikelyBabySkinRenderer(childRenderer))
+            {
+                candidates.Add(childRenderer);
+            }
+        }
+
+        babySkinRenderers = candidates.Count > 0 ? candidates.ToArray() : GetMeshRenderersOnly(childRenderers).ToArray();
+    }
+
+    private bool IsLikelyBabySkinRenderer(Renderer renderer)
+    {
+        string rendererName = renderer.name.ToLowerInvariant();
+        string materialName = renderer.sharedMaterial != null ? renderer.sharedMaterial.name.ToLowerInvariant() : "";
+
+        return rendererName.Contains("baby") ||
+               rendererName.Contains("bayi") ||
+               rendererName.Contains("skin") ||
+               rendererName.Contains("kulit") ||
+               rendererName.Contains("body") ||
+               rendererName.Contains("face") ||
+               rendererName.Contains("head") ||
+               materialName.Contains("young_asian") ||
+               materialName.Contains("female") ||
+               materialName.Contains("baby") ||
+               materialName.Contains("bayi") ||
+               materialName.Contains("skin") ||
+               materialName.Contains("kulit") ||
+               materialName.Contains("body") ||
+               materialName.Contains("face") ||
+               materialName.Contains("head");
+    }
+
+    private List<Renderer> GetMeshRenderersOnly(Renderer[] renderers)
+    {
+        List<Renderer> meshRenderers = new List<Renderer>();
+
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
+            {
+                meshRenderers.Add(renderer);
+            }
+        }
+
+        return meshRenderers;
+    }
+
+    private void UpdateFeverVisual()
+    {
+        if (babySkinRenderers == null || babySkinRenderers.Length == 0)
+        {
+            return;
+        }
+
+        if (skinPropertyBlocks == null || normalSkinColors == null)
+        {
+            InitializeFeverVisual();
+        }
+
+        bool hasFever = HasSymptom(Symptom.Demam) ||
+                        (feverVisualUsesTemperatureThreshold && temperature >= feverThreshold);
+        float lerpSpeed = feverSkinTintSpeed <= 0f ? 1f : Time.deltaTime * feverSkinTintSpeed;
+        float blink = Mathf.PingPong(Time.time * feverSkinBlinkSpeed, 1f);
+        float feverOpacity = Mathf.Lerp(feverSkinMinOpacity, feverSkinMaxOpacity, blink);
+
+        for (int i = 0; i < babySkinRenderers.Length; i++)
+        {
+            Renderer skinRenderer = babySkinRenderers[i];
+            if (skinRenderer == null || skinRenderer.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            MaterialPropertyBlock block = skinPropertyBlocks[i];
+            skinRenderer.GetPropertyBlock(block);
+
+            Material material = skinRenderer.sharedMaterial;
+            int colorPropertyId = material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
+            Color currentColor = block.GetColor(colorPropertyId);
+            if (currentColor == default)
+            {
+                currentColor = normalSkinColors[i];
+            }
+
+            Color targetColor = normalSkinColors[i];
+            if (hasFever)
+            {
+                targetColor = Color.Lerp(normalSkinColors[i], feverSkinColor, feverOpacity);
+            }
+
+            block.SetColor(colorPropertyId, Color.Lerp(currentColor, targetColor, lerpSpeed));
+            skinRenderer.SetPropertyBlock(block);
+        }
     }
 
     // ============ DISEASE INFECTION METHODS ============
