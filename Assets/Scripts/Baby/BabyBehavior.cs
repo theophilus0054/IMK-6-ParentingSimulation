@@ -760,4 +760,9 @@ public class BabyBehavior : MonoBehaviour
     {
         CureDisease();
     }
+
+    public float GetTemperature()
+    {
+        return temperature;
+    }
 }

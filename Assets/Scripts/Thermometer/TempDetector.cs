@@ -5,6 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit; // Wajib untuk XR Interaction Events
 public class TempDetector : MonoBehaviour
 {
     public TemperatureDisplay tempDisplay;
+    public BabyBehavior babyBehavior;
     
     // Coroutine untuk mengatur durasi tampilan UI
     private Coroutine activeTimer;
@@ -29,13 +30,13 @@ public class TempDetector : MonoBehaviour
             
             // Logika random suhu untuk prototype
             // Sesuai suhu tubuh normal manusia (36.5 - 37.5)
-            float randomTemp = Random.Range(36.5f, 37.5f); 
-            tempDisplay.UpdateTemperature(randomTemp);
+            float babyTemp = babyBehavior.GetTemperature();
+            tempDisplay.UpdateTemperature(babyTemp);
 
             // Jalankan timer untuk menyembunyikan UI setelah 7 detik
             activeTimer = StartCoroutine(DeactivateTemperatureTextAfterDelay(7.0f));
             
-            Debug.Log("Suhu " + hitObject.transform.name + " berhasil terdeteksi: " + randomTemp);
+            Debug.Log("Suhu " + hitObject.transform.name + " berhasil terdeteksi: " + babyTemp);
         }
         else
         {

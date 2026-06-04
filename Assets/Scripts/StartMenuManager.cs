@@ -21,6 +21,8 @@ public class StartMenuManager : MonoBehaviour
 	public float panelFadeSpeed = 2.0f; // Kecepatan panel hilang (Cepat)
 	public float blurFadeSpeed = 0.5f;  // Kecepatan blur hilang (Lambat)
 
+	private const float TutorialCanvasScale = 0.00625f;
+
 	private readonly TutorialSlide[] tutorialSlides =
 	{
 		new TutorialSlide("Misi Utama", "Tugasmu adalah mengobservasi gejala penyakit bayi\ndan mengambil keputusan medis yang tepat."),
@@ -72,6 +74,7 @@ public class StartMenuManager : MonoBehaviour
 
 	public void OnStartButtonClicked()
 	{
+		Debug.Log("[StartMenuManager] Start button clicked. Showing tutorial.");
 		ShowTutorial();
 	}
 
@@ -79,10 +82,7 @@ public class StartMenuManager : MonoBehaviour
 	{
 		CreateTutorialPanelIfNeeded();
 
-		if (startPanelObject != null)
-		{
-			startPanelObject.SetActive(false);
-		}
+		SetStartPanelContentActive(false);
 
 		if (tutorialPanelObject != null)
 		{
@@ -231,38 +231,87 @@ public class StartMenuManager : MonoBehaviour
 			return;
 		}
 
-		Transform parent = startPanelObject != null ? startPanelObject.transform.parent : transform;
+		Transform parent = GetTutorialParent();
 
 		tutorialPanelObject = new GameObject("PanelTutorial", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
 		tutorialPanelObject.transform.SetParent(parent, false);
 
 		RectTransform panelRect = tutorialPanelObject.GetComponent<RectTransform>();
-		Stretch(panelRect, Vector2.zero, Vector2.one);
+		ConfigureWorldPanelRect(panelRect);
 
 		Image panelImage = tutorialPanelObject.GetComponent<Image>();
 		panelImage.color = new Color(0.78f, 0.94f, 0.95f, 1f);
 
 		tutorialCanvasGroup = tutorialPanelObject.GetComponent<CanvasGroup>();
 
-		tutorialTitleText = CreateText(tutorialPanelObject.transform, "Tutorial Title", new Vector2(0.1f, 0.8f), new Vector2(0.9f, 0.95f), 38f, FontStyles.Bold, TextAlignmentOptions.Center);
+		tutorialTitleText = CreateText(tutorialPanelObject.transform, "Tutorial Title", new Vector2(0.1f, 0.82f), new Vector2(0.9f, 0.95f), 10f, FontStyles.Bold, TextAlignmentOptions.Center);
 
 		RectTransform cardRect = CreateRect(tutorialPanelObject.transform, "Tutorial Card", new Vector2(0.09f, 0.28f), new Vector2(0.91f, 0.72f));
 		Image cardImage = cardRect.gameObject.AddComponent<Image>();
 		cardImage.color = new Color(0.99f, 0.97f, 0.97f, 1f);
 		cardImage.raycastTarget = false;
 
-		tutorialSlideTitleText = CreateText(cardRect, "Tutorial Slide Title", new Vector2(0.08f, 0.64f), new Vector2(0.92f, 0.9f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+		tutorialSlideTitleText = CreateText(cardRect, "Tutorial Slide Title", new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.9f), 7f, FontStyles.Bold, TextAlignmentOptions.Center);
 		tutorialSlideTitleText.color = new Color(0.25f, 0.49f, 0.66f, 1f);
-		tutorialBodyText = CreateText(cardRect, "Tutorial Body", new Vector2(0.08f, 0.2f), new Vector2(0.92f, 0.6f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+		tutorialBodyText = CreateText(cardRect, "Tutorial Body", new Vector2(0.08f, 0.18f), new Vector2(0.92f, 0.62f), 5f, FontStyles.Bold, TextAlignmentOptions.Center);
 
-		previousButton = CreateTextButton(tutorialPanelObject.transform, "Tutorial Previous", "<", new Vector2(0.08f, 0.43f), new Vector2(0.16f, 0.55f), 40f);
+		previousButton = CreateTextButton(tutorialPanelObject.transform, "Tutorial Previous", "<", new Vector2(0.08f, 0.43f), new Vector2(0.16f, 0.55f), 10f);
 		previousButton.onClick.AddListener(PreviousTutorialPage);
 
-		nextButton = CreateTextButton(tutorialPanelObject.transform, "Tutorial Next", ">", new Vector2(0.84f, 0.43f), new Vector2(0.92f, 0.55f), 40f);
+		nextButton = CreateTextButton(tutorialPanelObject.transform, "Tutorial Next", ">", new Vector2(0.84f, 0.43f), new Vector2(0.92f, 0.55f), 10f);
 		nextButton.onClick.AddListener(NextTutorialPage);
 
-		understandButton = CreateTextButton(cardRect, "Tutorial Understand", "Mengerti", new Vector2(0.38f, 0.08f), new Vector2(0.62f, 0.2f), 24f);
+		understandButton = CreateTextButton(cardRect, "Tutorial Understand", "Mengerti", new Vector2(0.36f, 0.03f), new Vector2(0.64f, 0.17f), 5f);
 		understandButton.onClick.AddListener(FinishTutorial);
+	}
+
+	private void ConfigureWorldPanelRect(RectTransform rectTransform)
+	{
+		rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+		rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.sizeDelta = new Vector2(160f, 120f);
+		rectTransform.pivot = new Vector2(0.5f, 0.5f);
+		rectTransform.localScale = new Vector3(-TutorialCanvasScale, TutorialCanvasScale, 1f);
+	}
+
+	private Transform GetTutorialParent()
+	{
+		if (startPanelObject == null)
+		{
+			return transform;
+		}
+
+		// In this scene PanelStart is the world-space Canvas itself. A UI panel created
+		// beside it has no Canvas and will not render, so attach tutorial content to it.
+		if (startPanelObject.GetComponent<Canvas>() != null)
+		{
+			return startPanelObject.transform;
+		}
+
+		return startPanelObject.transform.parent != null ? startPanelObject.transform.parent : transform;
+	}
+
+	private void SetStartPanelContentActive(bool isActive)
+	{
+		if (startPanelObject == null)
+		{
+			return;
+		}
+
+		if (tutorialPanelObject != null && tutorialPanelObject.transform.IsChildOf(startPanelObject.transform))
+		{
+			foreach (Transform child in startPanelObject.transform)
+			{
+				if (child.gameObject != tutorialPanelObject)
+				{
+					child.gameObject.SetActive(isActive);
+				}
+			}
+			return;
+		}
+
+		startPanelObject.SetActive(isActive);
 	}
 
 	private void CacheTutorialReferences()
