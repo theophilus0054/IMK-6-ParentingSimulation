@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Baby
+  - OximeterSocket
   layers:
   - Default
   - TransparentFX

@@ -134,13 +134,13 @@ public class BabyAnimator : MonoBehaviour
             SetEffectActive(coughSputumParticle.gameObject, false);
         }
 
-        // Sesak Nafas → Oximeter ON
-        bool isSesakAllowed = (currentAnimationState == fastBreathState);
-        SetEffectActive(oximeterObject, hasSesak && isSesakAllowed);
+        // // Sesak Nafas → Oximeter ON
+        // bool isSesakAllowed = (currentAnimationState == fastBreathState);
+        // SetEffectActive(oximeterObject, hasSesak && isSesakAllowed);
 
-        // Demam → Thermometer ON
-        bool isDemamAllowed = (currentAnimationState == rewelState);
-        SetEffectActive(thermometerObject, hasDemam && isDemamAllowed);
+        // // Demam → Thermometer ON
+        // bool isDemamAllowed = (currentAnimationState == rewelState);
+        // SetEffectActive(thermometerObject, hasDemam && isDemamAllowed);
     }
 
     private void SetEffectActive(GameObject target, bool isActive)

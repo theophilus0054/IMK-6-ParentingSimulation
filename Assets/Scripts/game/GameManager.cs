@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
         // Auto-assign components jika belum di-assign di Inspector
         if (babyBehavior == null)
         {
-            babyBehavior = FindObjectOfType<BabyBehavior>();
+            babyBehavior = FindFirstObjectByType<BabyBehavior>();
             if (babyBehavior == null)
             {
                 Debug.LogError("[GameManager] BabyBehavior tidak ditemukan di scene!");
@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour
         saveLoadManager = GetComponent<SaveLoadManager>();
         if (gameOverManager == null)
         {
-            gameOverManager = FindObjectOfType<GameOverManager>();
+            gameOverManager = FindFirstObjectByType<GameOverManager>();
         }
 
         if (saveLoadManager == null)
