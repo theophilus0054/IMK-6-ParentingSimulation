@@ -46,6 +46,9 @@ public class DiseaseIdentifier : MonoBehaviour
     private float lastPilekClickTime = -1f;
 
     private const float ButtonClickCooldown = 0.15f;
+    private const float FeedbackPanelScale = 0.00625f;
+    private const float FeedbackFontSize = 5f;
+    private static readonly Vector2 FeedbackPanelSize = new Vector2(160f, 120f);
 
     private void Start()
     {
@@ -250,7 +253,7 @@ public class DiseaseIdentifier : MonoBehaviour
             "Pilih Tindakan",
             "pilih salah satu: Self-care atau bawa ke dokter",
             "Setelah mengamati gejala bayi, tentukan apakah kondisinya cukup dirawat mandiri atau membutuhkan penanganan dokter.",
-            new Color(0.25f, 0.49f, 0.66f, 1f),
+            new Color(0.0025f, 0.0049f, 0.0066f, 0.001f),
             false);
     }
 
@@ -288,7 +291,7 @@ public class DiseaseIdentifier : MonoBehaviour
                 "Penanganan Berlebihan ❌",
                 "seharusnya pilih : Self-care",
                 "Bayi hanya mengalami demam ringan biasa. Membawanya ke rumah sakit justru berisiko memaparkannya pada virus lain.",
-                new Color(1f, 0.3f, 0.08f, 1f),
+                new Color(0.01f, 0.03f, 0.008f, 0.01f),
                 false);
             return;
         }
@@ -299,7 +302,7 @@ public class DiseaseIdentifier : MonoBehaviour
                 "Kondisi Kritis Terabaikan ❌",
                 "seharusnya pilih : bawa ke dokter",
                 "Gejala seperti sesak napas dan demam tinggi adalah tanda bahaya (Red Flags). Perawatan mandiri di rumah tidak lagi cukup. Bayi harus segera mendapatkan penanganan medis dan bantuan darurat di rumah sakit!",
-                new Color(1f, 0.3f, 0.08f, 1f),
+                new Color(0.01f, 0.03f, 0.008f, 0.01f),
                 false);
             return;
         }
@@ -346,7 +349,7 @@ public class DiseaseIdentifier : MonoBehaviour
         if (feedbackPanel != null)
         {
             SetupFeedbackLayout();
-            PlacePanelInFrontOfPlayer(feedbackPanel, feedbackDistance, feedbackOffset);
+            PlacePanelInFrontOfPlayer(GetFeedbackRootObject(), feedbackDistance, feedbackOffset);
             feedbackPanel.SetActive(true);
         }
 
@@ -381,6 +384,8 @@ public class DiseaseIdentifier : MonoBehaviour
             panelImage.raycastTarget = true;
         }
 
+        ConfigureFeedbackPanelScale();
+
         feedbackCard = EnsureRectChild(feedbackPanel.transform, "Feedback Card", new Vector2(0.08f, 0.14f), new Vector2(0.92f, 0.74f));
         Image cardImage = feedbackCard.GetComponent<Image>();
         if (cardImage == null)
@@ -391,19 +396,62 @@ public class DiseaseIdentifier : MonoBehaviour
         cardImage.color = new Color(0.99f, 0.97f, 0.97f, 1f);
         cardImage.raycastTarget = false;
 
-        feedbackTitleText = EnsureTextChild(feedbackPanel.transform, feedbackTitleText, "Feedback Title", new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.98f), 38f, FontStyles.Bold, TextAlignmentOptions.Center);
-        feedbackRecommendationText = EnsureTextChild(feedbackCard, feedbackRecommendationText, "Feedback Recommendation", new Vector2(0.08f, 0.64f), new Vector2(0.92f, 0.9f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+        feedbackTitleText = EnsureTextChild(feedbackPanel.transform, feedbackTitleText, "Feedback Title", new Vector2(0.005f, 0.078f), new Vector2(0.095f, 0.098f), FeedbackFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
+        feedbackRecommendationText = EnsureTextChild(feedbackCard, feedbackRecommendationText, "Feedback Recommendation", new Vector2(0.008f, 0.064f), new Vector2(0.092f, 0.09f), FeedbackFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
 
         if (feedbackText == null)
         {
-            feedbackText = EnsureTextChild(feedbackCard, feedbackText, "Feedback Body", new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.58f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+            feedbackText = EnsureTextChild(feedbackCard, feedbackText, "Feedback Body", new Vector2(0.008f, 0.012f), new Vector2(0.092f, 0.058f), FeedbackFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
         }
         else
         {
             feedbackText.transform.SetParent(feedbackCard, false);
             ConfigureTextRect(feedbackText.GetComponent<RectTransform>(), new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.58f));
-            ConfigureText(feedbackText, 24f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(feedbackText, FeedbackFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
         }
+    }
+
+    private GameObject GetFeedbackRootObject()
+    {
+        if (feedbackPanel == null)
+        {
+            return null;
+        }
+
+        Canvas canvas = feedbackPanel.GetComponentInParent<Canvas>();
+        return canvas != null ? canvas.gameObject : feedbackPanel;
+    }
+
+    private void ConfigureFeedbackPanelScale()
+    {
+        RectTransform panelRect = feedbackPanel.GetComponent<RectTransform>();
+        if (panelRect != null)
+        {
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+            panelRect.localScale = Vector3.one;
+        }
+
+        Canvas canvas = feedbackPanel.GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            return;
+        }
+
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        if (canvasRect == null)
+        {
+            return;
+        }
+
+        canvasRect.anchorMin = new Vector2(0.5f, 0.5f);
+        canvasRect.anchorMax = new Vector2(0.5f, 0.5f);
+        canvasRect.anchoredPosition = Vector2.zero;
+        canvasRect.sizeDelta = FeedbackPanelSize;
+        canvasRect.pivot = new Vector2(0.5f, 0.5f);
+        canvasRect.localScale = new Vector3(FeedbackPanelScale, FeedbackPanelScale, 1f);
     }
 
     private RectTransform EnsureRectChild(Transform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax)
@@ -467,6 +515,9 @@ public class DiseaseIdentifier : MonoBehaviour
     private void ConfigureText(TMP_Text text, float fontSize, FontStyles fontStyle, TextAlignmentOptions alignment)
     {
         text.fontSize = fontSize;
+        text.fontSizeMin = fontSize;
+        text.fontSizeMax = fontSize;
+        text.enableAutoSizing = false;
         text.fontStyle = fontStyle;
         text.alignment = alignment;
         text.color = Color.black;
