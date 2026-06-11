@@ -1,6 +1,6 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class DiseaseIdentifier : MonoBehaviour
 {
@@ -27,6 +27,7 @@ public class DiseaseIdentifier : MonoBehaviour
     public TMP_Text feedbackText;
     public TMP_Text feedbackTitleText;
     public TMP_Text feedbackRecommendationText;
+    public string feedbackResourcesFolder = "Feedback Frame";
 
     [Header("Posisi Panel")]
     public Transform playerCamera;
@@ -38,7 +39,17 @@ public class DiseaseIdentifier : MonoBehaviour
     private bool batukBerdahak;
     private bool sesakNapas;
     private bool pilek;
+    private bool symptomsSubmittedAndValid;
+
+    private Image feedbackImage;
+    private Button feedbackCloseButton;
     private RectTransform feedbackCard;
+    private Sprite correctTreatmentSprite;
+    private Sprite overTreatmentSprite;
+    private Sprite criticalIgnoredSprite;
+    private Sprite chooseTreatmentSprite;
+    private Sprite wrongSymptomsSprite;
+
     private float lastDemamClickTime = -1f;
     private float lastBatukClickTime = -1f;
     private float lastBatukBerdahakClickTime = -1f;
@@ -52,16 +63,17 @@ public class DiseaseIdentifier : MonoBehaviour
 
     private void Start()
     {
-        // Feedback panel tidak muncul saat awal game
-        if (feedbackPanel != null)
-        {
-            feedbackPanel.SetActive(false);
-        }
-
+        LoadFeedbackSprites();
         RegisterButtonListeners();
         RegisterSubmitButtonListeners();
         SetupFeedbackLayout();
         UpdateAllButtonColors();
+        SetTreatmentButtonsInteractable(false);
+
+        if (feedbackPanel != null)
+        {
+            feedbackPanel.SetActive(false);
+        }
     }
 
     private void OnDestroy()
@@ -72,35 +84,22 @@ public class DiseaseIdentifier : MonoBehaviour
 
     private void RegisterButtonListeners()
     {
-        if (demamButton != null)
+        RegisterButtonListener(demamButton, ToggleDemam);
+        RegisterButtonListener(batukButton, ToggleBatuk);
+        RegisterButtonListener(batukBerdahakButton, ToggleBatukBerdahak);
+        RegisterButtonListener(sesakNapasButton, ToggleSesakNapas);
+        RegisterButtonListener(pilekButton, TogglePilek);
+    }
+
+    private void RegisterButtonListener(Button button, UnityEngine.Events.UnityAction action)
+    {
+        if (button == null)
         {
-            demamButton.onClick.RemoveListener(ToggleDemam);
-            demamButton.onClick.AddListener(ToggleDemam);
+            return;
         }
 
-        if (batukButton != null)
-        {
-            batukButton.onClick.RemoveListener(ToggleBatuk);
-            batukButton.onClick.AddListener(ToggleBatuk);
-        }
-
-        if (batukBerdahakButton != null)
-        {
-            batukBerdahakButton.onClick.RemoveListener(ToggleBatukBerdahak);
-            batukBerdahakButton.onClick.AddListener(ToggleBatukBerdahak);
-        }
-
-        if (sesakNapasButton != null)
-        {
-            sesakNapasButton.onClick.RemoveListener(ToggleSesakNapas);
-            sesakNapasButton.onClick.AddListener(ToggleSesakNapas);
-        }
-
-        if (pilekButton != null)
-        {
-            pilekButton.onClick.RemoveListener(TogglePilek);
-            pilekButton.onClick.AddListener(TogglePilek);
-        }
+        button.onClick.RemoveListener(action);
+        button.onClick.AddListener(action);
     }
 
     private void RegisterSubmitButtonListeners()
@@ -115,22 +114,33 @@ public class DiseaseIdentifier : MonoBehaviour
             doctorSubmitButton = FindButtonByName("Submit (2)");
         }
 
-        if (selfCareSubmitButton != null)
+        if (selfCareSubmitButton != null && selfCareSubmitButton.onClick.GetPersistentEventCount() == 0)
         {
-            if (selfCareSubmitButton.onClick.GetPersistentEventCount() == 0)
-            {
-                selfCareSubmitButton.onClick.RemoveListener(SubmitSelfCare);
-                selfCareSubmitButton.onClick.AddListener(SubmitSelfCare);
-            }
+            selfCareSubmitButton.onClick.RemoveListener(SubmitSelfCare);
+            selfCareSubmitButton.onClick.AddListener(SubmitSelfCare);
         }
 
-        if (doctorSubmitButton != null)
+        if (doctorSubmitButton != null && doctorSubmitButton.onClick.GetPersistentEventCount() == 0)
         {
-            if (doctorSubmitButton.onClick.GetPersistentEventCount() == 0)
-            {
-                doctorSubmitButton.onClick.RemoveListener(SubmitDoctor);
-                doctorSubmitButton.onClick.AddListener(SubmitDoctor);
-            }
+            doctorSubmitButton.onClick.RemoveListener(SubmitDoctor);
+            doctorSubmitButton.onClick.AddListener(SubmitDoctor);
+        }
+    }
+
+    private void UnregisterButtonListeners()
+    {
+        UnregisterButtonListener(demamButton, ToggleDemam);
+        UnregisterButtonListener(batukButton, ToggleBatuk);
+        UnregisterButtonListener(batukBerdahakButton, ToggleBatukBerdahak);
+        UnregisterButtonListener(sesakNapasButton, ToggleSesakNapas);
+        UnregisterButtonListener(pilekButton, TogglePilek);
+    }
+
+    private void UnregisterButtonListener(Button button, UnityEngine.Events.UnityAction action)
+    {
+        if (button != null)
+        {
+            button.onClick.RemoveListener(action);
         }
     }
 
@@ -159,34 +169,6 @@ public class DiseaseIdentifier : MonoBehaviour
         }
 
         return null;
-    }
-
-    private void UnregisterButtonListeners()
-    {
-        if (demamButton != null)
-        {
-            demamButton.onClick.RemoveListener(ToggleDemam);
-        }
-
-        if (batukButton != null)
-        {
-            batukButton.onClick.RemoveListener(ToggleBatuk);
-        }
-
-        if (batukBerdahakButton != null)
-        {
-            batukBerdahakButton.onClick.RemoveListener(ToggleBatukBerdahak);
-        }
-
-        if (sesakNapasButton != null)
-        {
-            sesakNapasButton.onClick.RemoveListener(ToggleSesakNapas);
-        }
-
-        if (pilekButton != null)
-        {
-            pilekButton.onClick.RemoveListener(TogglePilek);
-        }
     }
 
     public void ToggleDemam()
@@ -223,6 +205,8 @@ public class DiseaseIdentifier : MonoBehaviour
 
         lastClickTime = Time.unscaledTime;
         gejala = !gejala;
+        symptomsSubmittedAndValid = false;
+        SetTreatmentButtonsInteractable(false);
         UpdateButtonColor(button, gejala);
         Debug.Log(label + ": " + gejala);
     }
@@ -249,12 +233,23 @@ public class DiseaseIdentifier : MonoBehaviour
 
     public void SubmitIdentifikasi()
     {
-        ShowFeedback(
-            "Pilih Tindakan",
-            "pilih salah satu: Self-care atau bawa ke dokter",
-            "Setelah mengamati gejala bayi, tentukan apakah kondisinya cukup dirawat mandiri atau membutuhkan penanganan dokter.",
-            new Color(0.0025f, 0.0049f, 0.0066f, 0.001f),
-            false);
+        if (babyBehavior == null)
+        {
+            Debug.LogError("[DiseaseIdentifier] BabyBehavior belum di-assign!");
+            return;
+        }
+
+        BabyBehavior.DiseaseState penyakitBayiSaatIni = babyBehavior.currentDisease;
+        BabyBehavior.DiseaseState jawabanUser = GetJawabanUserDariChecklist();
+        symptomsSubmittedAndValid = jawabanUser != BabyBehavior.DiseaseState.None && jawabanUser == penyakitBayiSaatIni;
+        SetTreatmentButtonsInteractable(symptomsSubmittedAndValid);
+
+        Debug.Log("=== SUBMIT GEJALA ===");
+        Debug.Log("State penyakit bayi saat submit: " + penyakitBayiSaatIni);
+        Debug.Log("Jawaban user: " + jawabanUser);
+        Debug.Log("Gejala valid: " + symptomsSubmittedAndValid);
+
+        ShowFeedbackSprite(symptomsSubmittedAndValid ? chooseTreatmentSprite : wrongSymptomsSprite);
     }
 
     public void SubmitSelfCare()
@@ -277,6 +272,15 @@ public class DiseaseIdentifier : MonoBehaviour
 
         BabyBehavior.DiseaseState penyakitBayiSaatIni = babyBehavior.currentDisease;
         BabyBehavior.DiseaseState jawabanUser = GetJawabanUserDariChecklist();
+
+        if (!symptomsSubmittedAndValid || jawabanUser == BabyBehavior.DiseaseState.None || jawabanUser != penyakitBayiSaatIni)
+        {
+            symptomsSubmittedAndValid = false;
+            SetTreatmentButtonsInteractable(false);
+            ShowFeedbackSprite(wrongSymptomsSprite);
+            return;
+        }
+
         TreatmentChoice expectedChoice = GetExpectedTreatment(penyakitBayiSaatIni);
 
         Debug.Log("=== SUBMIT IDENTIFIKASI ===");
@@ -287,45 +291,25 @@ public class DiseaseIdentifier : MonoBehaviour
 
         if (penyakitBayiSaatIni == BabyBehavior.DiseaseState.CommonCold && choice == TreatmentChoice.Doctor)
         {
-            ShowFeedback(
-                "Penanganan Berlebihan ❌",
-                "seharusnya pilih : Self-care",
-                "Bayi hanya mengalami demam ringan biasa. Membawanya ke rumah sakit justru berisiko memaparkannya pada virus lain.",
-                new Color(0.01f, 0.03f, 0.008f, 0.01f),
-                false);
+            ShowFeedbackSprite(overTreatmentSprite);
             return;
         }
 
         if (penyakitBayiSaatIni == BabyBehavior.DiseaseState.Pneumonia && choice == TreatmentChoice.SelfCare)
         {
-            ShowFeedback(
-                "Kondisi Kritis Terabaikan ❌",
-                "seharusnya pilih : bawa ke dokter",
-                "Gejala seperti sesak napas dan demam tinggi adalah tanda bahaya (Red Flags). Perawatan mandiri di rumah tidak lagi cukup. Bayi harus segera mendapatkan penanganan medis dan bantuan darurat di rumah sakit!",
-                new Color(0.01f, 0.03f, 0.008f, 0.01f),
-                false);
+            ShowFeedbackSprite(criticalIgnoredSprite);
             return;
         }
 
         if (expectedChoice != TreatmentChoice.None && choice == expectedChoice)
         {
             Debug.Log("<color=green>Identifikasi benar!</color>");
-            ShowFeedback(
-                "Keputusan Tepat ⭐",
-                "Tindakanmu berhasil menyelamatkan kondisi bayi",
-                "Tahukah kamu? Pneumonia adalah penyakit infeksi pembunuh nomor 1 pada anak balita di seluruh dunia! Penyakit ini menyumbang belasan persen dari total kematian anak di bawah usia 5 tahun setiap tahunnya. Kecepatan dan ketepatan observasimu sebagai orang tua sangat krusial untuk menyelamatkan nyawa mereka.",
-                new Color(0.43f, 0.64f, 0.25f, 1f),
-                true);
+            ShowFeedbackSprite(correctTreatmentSprite);
         }
         else
         {
             Debug.Log("<color=red>Identifikasi salah.</color>");
-            ShowFeedback(
-                "Observasi Belum Tepat ❌",
-                "periksa lagi tanda-tanda bayi",
-                "Kondisi bayi belum cukup jelas dari pilihanmu. Perhatikan kembali suhu, napas, batuk, pilek, dan tanda bahaya sebelum menentukan tindakan.",
-                new Color(1f, 0.3f, 0.08f, 1f),
-                false);
+            ShowFeedbackSprite(wrongSymptomsSprite);
         }
     }
 
@@ -344,30 +328,24 @@ public class DiseaseIdentifier : MonoBehaviour
         return TreatmentChoice.None;
     }
 
-    private void ShowFeedback(string title, string recommendation, string body, Color accentColor, bool isCorrect)
+    private void ShowFeedbackSprite(Sprite sprite)
     {
+        SetupFeedbackLayout();
+
         if (feedbackPanel != null)
         {
-            SetupFeedbackLayout();
             PlacePanelInFrontOfPlayer(GetFeedbackRootObject(), feedbackDistance, feedbackOffset);
             feedbackPanel.SetActive(true);
         }
 
-        if (feedbackTitleText != null)
+        if (feedbackImage != null)
         {
-            feedbackTitleText.text = title;
+            feedbackImage.enabled = sprite != null;
+            feedbackImage.sprite = sprite;
+            feedbackImage.preserveAspect = true;
         }
 
-        if (feedbackRecommendationText != null)
-        {
-            feedbackRecommendationText.text = recommendation;
-            feedbackRecommendationText.color = accentColor;
-        }
-
-        if (feedbackText != null)
-        {
-            feedbackText.text = body;
-        }
+        SetTextFeedbackActive(sprite == null);
     }
 
     private void SetupFeedbackLayout()
@@ -377,12 +355,23 @@ public class DiseaseIdentifier : MonoBehaviour
             return;
         }
 
-        Image panelImage = feedbackPanel.GetComponent<Image>();
-        if (panelImage != null)
+        feedbackImage = feedbackPanel.GetComponent<Image>();
+        if (feedbackImage == null)
         {
-            panelImage.color = new Color(0.78f, 0.94f, 0.95f, 1f);
-            panelImage.raycastTarget = true;
+            feedbackImage = feedbackPanel.AddComponent<Image>();
         }
+
+        feedbackImage.color = Color.white;
+        feedbackImage.raycastTarget = true;
+
+        feedbackCloseButton = feedbackPanel.GetComponent<Button>();
+        if (feedbackCloseButton == null)
+        {
+            feedbackCloseButton = feedbackPanel.AddComponent<Button>();
+        }
+
+        feedbackCloseButton.onClick.RemoveListener(CloseFeedbackPanel);
+        feedbackCloseButton.onClick.AddListener(CloseFeedbackPanel);
 
         ConfigureFeedbackPanelScale();
 
@@ -408,6 +397,68 @@ public class DiseaseIdentifier : MonoBehaviour
             feedbackText.transform.SetParent(feedbackCard, false);
             ConfigureTextRect(feedbackText.GetComponent<RectTransform>(), new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.58f));
             ConfigureText(feedbackText, FeedbackFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
+        }
+
+        SetTextFeedbackActive(false);
+    }
+
+    private void LoadFeedbackSprites()
+    {
+        correctTreatmentSprite = LoadFeedbackSprite("Frame 1");
+        overTreatmentSprite = LoadFeedbackSprite("Frame 2");
+        criticalIgnoredSprite = LoadFeedbackSprite("Frame 3");
+        chooseTreatmentSprite = LoadFeedbackSprite("Frame 12");
+        wrongSymptomsSprite = LoadFeedbackSprite("Frame 13");
+    }
+
+    private Sprite LoadFeedbackSprite(string spriteName)
+    {
+        if (string.IsNullOrEmpty(feedbackResourcesFolder))
+        {
+            return null;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(feedbackResourcesFolder + "/" + spriteName);
+        if (sprite != null)
+        {
+            return sprite;
+        }
+
+        Texture2D texture = Resources.Load<Texture2D>(feedbackResourcesFolder + "/" + spriteName);
+        if (texture == null)
+        {
+            Debug.LogWarning("[DiseaseIdentifier] Feedback sprite tidak ditemukan: " + feedbackResourcesFolder + "/" + spriteName);
+            return null;
+        }
+
+        Sprite textureSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        textureSprite.name = texture.name;
+        return textureSprite;
+    }
+
+    private void SetTextFeedbackActive(bool isActive)
+    {
+        if (feedbackCard != null)
+        {
+            feedbackCard.gameObject.SetActive(isActive);
+        }
+
+        if (feedbackTitleText != null)
+        {
+            feedbackTitleText.gameObject.SetActive(isActive);
+        }
+    }
+
+    private void SetTreatmentButtonsInteractable(bool isInteractable)
+    {
+        if (selfCareSubmitButton != null)
+        {
+            selfCareSubmitButton.interactable = isInteractable;
+        }
+
+        if (doctorSubmitButton != null)
+        {
+            doctorSubmitButton.interactable = isInteractable;
         }
     }
 
@@ -563,19 +614,16 @@ public class DiseaseIdentifier : MonoBehaviour
         Debug.Log("Sesak Napas: " + sesakNapas);
         Debug.Log("Pilek: " + pilek);
 
-        // Common Cold = hanya Pilek + Batuk
         if (!demam && batuk && !batukBerdahak && !sesakNapas && pilek)
         {
             return BabyBehavior.DiseaseState.CommonCold;
         }
 
-        // Pneumonia = Demam + Batuk Berdahak + Sesak Napas
         if (demam && !batuk && batukBerdahak && sesakNapas && !pilek)
         {
             return BabyBehavior.DiseaseState.Pneumonia;
         }
 
-        // Kombinasi lain dianggap tidak valid
         return BabyBehavior.DiseaseState.None;
     }
 
@@ -586,8 +634,10 @@ public class DiseaseIdentifier : MonoBehaviour
         batukBerdahak = false;
         sesakNapas = false;
         pilek = false;
+        symptomsSubmittedAndValid = false;
 
         UpdateAllButtonColors();
+        SetTreatmentButtonsInteractable(false);
 
         if (feedbackPanel != null)
         {
