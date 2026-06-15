@@ -19,6 +19,14 @@ public class StartMenuManager : MonoBehaviour
 	[Tooltip("Fallback auto-load dari Resources/TutorialFrames. Mendukung frame1..frame7 atau Frame 4..Frame 7, dan Frame 10.")]
 	public string tutorialResourcesFolder = "TutorialFrames";
 
+	[Header("Start Menu PNG")]
+	[Tooltip("Sprite menu awal dengan tombol START dan tanda seru. Auto-load Frame 9 jika kosong.")]
+	public Sprite startMenuSprite;
+	[Tooltip("Sprite info pertama. Auto-load Frame 11 jika kosong.")]
+	public Sprite startInfoSprite;
+	[Tooltip("Sprite info tambahan. Jika kosong, tombol atas di Frame 11 akan kembali ke start menu.")]
+	public Sprite startInfoDetailSprite;
+
 	[Header("Referensi Efek")]
 	public Volume blurVolume;
 
@@ -30,6 +38,7 @@ public class StartMenuManager : MonoBehaviour
 	public float blurFadeSpeed = 0.5f;
 
 	private const float TutorialCanvasScale = 0.00625f;
+	private const float TutorialButtonCooldown = 0.35f;
 	private readonly TutorialSlide[] fallbackSlides =
 	{
 		new TutorialSlide("Misi Utama", "Tugasmu adalah mengobservasi gejala penyakit bayi\ndan mengambil keputusan medis yang tepat."),
@@ -43,12 +52,19 @@ public class StartMenuManager : MonoBehaviour
 	private TMP_Text fallbackTitleText;
 	private TMP_Text fallbackSlideTitleText;
 	private TMP_Text fallbackBodyText;
+	private GameObject startMenuRuntimeObject;
+	private Image startMenuImage;
+	private Button startMenuStartButton;
+	private Button startMenuInfoButton;
+	private Button startMenuInfoTopButton;
 	private Button previousButton;
 	private Button nextButton;
 	private Button understandButton;
 	private int currentTutorialIndex;
-	private bool showingFinalFrame;
+	private bool showingIntroFrame;
 	private bool transitionStarted;
+	private float tutorialInputUnlockTime;
+	private float lastTutorialButtonClickTime = -1f;
 
 	private int LastTutorialIndex
 	{
@@ -91,6 +107,8 @@ public class StartMenuManager : MonoBehaviour
 		}
 
 		LoadTutorialSpritesFromResourcesIfNeeded();
+		LoadStartMenuSpritesFromResourcesIfNeeded();
+		CreateStartMenuSpritePanelIfNeeded();
 		CreateTutorialPanelIfNeeded();
 		if (tutorialPanelObject != null)
 		{
@@ -123,17 +141,45 @@ public class StartMenuManager : MonoBehaviour
 		}
 
 		currentTutorialIndex = 0;
-		showingFinalFrame = false;
+		showingIntroFrame = finalTutorialSprite != null;
+		tutorialInputUnlockTime = Time.unscaledTime + 0.2f;
+		lastTutorialButtonClickTime = -1f;
 		UpdateTutorialPage();
+	}
+
+	private void ShowStartInfoFrame()
+	{
+		SetStartMenuSprite(startInfoSprite);
+		SetStartMenuButtonsActive(false, false, true);
+	}
+
+	private void ShowStartInfoDetailFrame()
+	{
+		if (startInfoDetailSprite != null)
+		{
+			SetStartMenuSprite(startInfoDetailSprite);
+			SetStartMenuButtonsActive(false, false, true);
+			return;
+		}
+
+		RestoreStartMenuFrame();
+	}
+
+	private void RestoreStartMenuFrame()
+	{
+		SetStartMenuSprite(startMenuSprite);
+		SetStartMenuButtonsActive(true, true, false);
 	}
 
 	private void PreviousTutorialPage()
 	{
-		if (showingFinalFrame)
+		if (!CanAcceptTutorialButtonClick())
 		{
-			showingFinalFrame = false;
-			currentTutorialIndex = Mathf.Clamp(UnderstandFrameIndex, 0, LastTutorialIndex);
-			UpdateTutorialPage();
+			return;
+		}
+
+		if (showingIntroFrame)
+		{
 			return;
 		}
 
@@ -148,8 +194,22 @@ public class StartMenuManager : MonoBehaviour
 
 	private void NextTutorialPage()
 	{
-		if (showingFinalFrame)
+		if (!CanAcceptTutorialButtonClick())
 		{
+			return;
+		}
+
+		if (showingIntroFrame)
+		{
+			if (Time.unscaledTime < tutorialInputUnlockTime)
+			{
+				return;
+			}
+
+			Debug.Log("[StartMenuManager] Intro tutorial continue clicked. Showing tutorial frames.");
+			showingIntroFrame = false;
+			currentTutorialIndex = 0;
+			UpdateTutorialPage();
 			return;
 		}
 
@@ -164,14 +224,43 @@ public class StartMenuManager : MonoBehaviour
 
 	private void OnUnderstandButtonClicked()
 	{
-		if (!showingFinalFrame && currentTutorialIndex == UnderstandFrameIndex && finalTutorialSprite != null)
+		if (!CanAcceptTutorialButtonClick())
 		{
-			showingFinalFrame = true;
+			return;
+		}
+
+		if (showingIntroFrame)
+		{
+			if (Time.unscaledTime < tutorialInputUnlockTime)
+			{
+				return;
+			}
+
+			Debug.Log("[StartMenuManager] Intro tutorial continue clicked. Showing tutorial frames.");
+			showingIntroFrame = false;
+			currentTutorialIndex = 0;
 			UpdateTutorialPage();
 			return;
 		}
 
+		if (currentTutorialIndex != UnderstandFrameIndex)
+		{
+			return;
+		}
+
+		Debug.Log("[StartMenuManager] Tutorial understand clicked. Starting game.");
 		FinishTutorial();
+	}
+
+	private bool CanAcceptTutorialButtonClick()
+	{
+		if (Time.unscaledTime - lastTutorialButtonClickTime < TutorialButtonCooldown)
+		{
+			return false;
+		}
+
+		lastTutorialButtonClickTime = Time.unscaledTime;
+		return true;
 	}
 
 	private void FinishTutorial()
@@ -203,9 +292,9 @@ public class StartMenuManager : MonoBehaviour
 			UpdateFallbackText();
 		}
 
-		bool onUnderstandFrame = currentTutorialIndex == UnderstandFrameIndex || currentTutorialIndex >= LastTutorialIndex;
-		bool canGoPrevious = showingFinalFrame || currentTutorialIndex > 0;
-		bool canGoNext = !showingFinalFrame && currentTutorialIndex < LastTutorialIndex && !onUnderstandFrame;
+		bool onUnderstandFrame = !showingIntroFrame && (currentTutorialIndex == UnderstandFrameIndex || currentTutorialIndex >= LastTutorialIndex);
+		bool canGoPrevious = !showingIntroFrame && currentTutorialIndex > 0;
+		bool canGoNext = !showingIntroFrame && currentTutorialIndex < LastTutorialIndex && !onUnderstandFrame;
 
 		if (previousButton != null)
 		{
@@ -219,13 +308,13 @@ public class StartMenuManager : MonoBehaviour
 
 		if (understandButton != null)
 		{
-			understandButton.gameObject.SetActive(showingFinalFrame || onUnderstandFrame);
+			understandButton.gameObject.SetActive(showingIntroFrame || onUnderstandFrame);
 		}
 	}
 
 	private Sprite GetCurrentSprite()
 	{
-		if (showingFinalFrame)
+		if (showingIntroFrame)
 		{
 			return finalTutorialSprite;
 		}
@@ -304,25 +393,33 @@ public class StartMenuManager : MonoBehaviour
 			return;
 		}
 
-		bool hasAnyTutorialSprite = tutorialFrameSprites != null && tutorialFrameSprites.Length > 0 && tutorialFrameSprites[0] != null;
-		if (!hasAnyTutorialSprite)
+		Sprite[] explicitTutorialFrames = LoadSequentialTutorialFrames(4, 7);
+		if (HasAllSprites(explicitTutorialFrames))
 		{
-			tutorialFrameSprites = Resources.LoadAll<Sprite>(tutorialResourcesFolder);
-			System.Array.Sort(tutorialFrameSprites, CompareTutorialSprites);
-
-			if (tutorialFrameSprites.Length == 0)
+			tutorialFrameSprites = explicitTutorialFrames;
+		}
+		else
+		{
+			bool hasAnyTutorialSprite = tutorialFrameSprites != null && tutorialFrameSprites.Length > 0 && tutorialFrameSprites[0] != null;
+			if (!hasAnyTutorialSprite)
 			{
-				Texture2D[] tutorialTextures = Resources.LoadAll<Texture2D>(tutorialResourcesFolder);
-				System.Array.Sort(tutorialTextures, CompareTutorialTextures);
-				tutorialFrameSprites = CreateSpritesFromTextures(tutorialTextures);
-			}
+				tutorialFrameSprites = Resources.LoadAll<Sprite>(tutorialResourcesFolder);
+				System.Array.Sort(tutorialFrameSprites, CompareTutorialSprites);
 
-			if (tutorialFrameSprites.Length == 0)
-			{
-				tutorialFrameSprites = new Sprite[fallbackSlides.Length];
-				for (int i = 0; i < tutorialFrameSprites.Length; i++)
+				if (tutorialFrameSprites.Length == 0)
 				{
-					tutorialFrameSprites[i] = LoadSpriteByAnyName("frame" + (i + 1), "Frame " + (i + 1));
+					Texture2D[] tutorialTextures = Resources.LoadAll<Texture2D>(tutorialResourcesFolder);
+					System.Array.Sort(tutorialTextures, CompareTutorialTextures);
+					tutorialFrameSprites = CreateSpritesFromTextures(tutorialTextures);
+				}
+
+				if (tutorialFrameSprites.Length == 0)
+				{
+					tutorialFrameSprites = new Sprite[fallbackSlides.Length];
+					for (int i = 0; i < tutorialFrameSprites.Length; i++)
+					{
+						tutorialFrameSprites[i] = LoadSpriteByAnyName("frame" + (i + 1), "Frame " + (i + 1));
+					}
 				}
 			}
 		}
@@ -336,6 +433,61 @@ public class StartMenuManager : MonoBehaviour
 		{
 			tutorialFrameSprites = RemoveFinalFrameFromTutorialFrames(tutorialFrameSprites);
 		}
+	}
+
+	private void LoadStartMenuSpritesFromResourcesIfNeeded()
+	{
+		if (string.IsNullOrEmpty(tutorialResourcesFolder))
+		{
+			return;
+		}
+
+		if (startMenuSprite == null)
+		{
+			startMenuSprite = LoadSpriteByAnyName("frame9", "Frame 9");
+		}
+
+		if (startInfoSprite == null)
+		{
+			startInfoSprite = LoadSpriteByAnyName("frame11", "Frame 11");
+		}
+
+		if (startInfoDetailSprite == null)
+		{
+			startInfoDetailSprite = null;
+		}
+	}
+
+	private Sprite[] LoadSequentialTutorialFrames(int firstFrameNumber, int lastFrameNumber)
+	{
+		int frameCount = lastFrameNumber - firstFrameNumber + 1;
+		Sprite[] sprites = new Sprite[frameCount];
+
+		for (int i = 0; i < frameCount; i++)
+		{
+			int frameNumber = firstFrameNumber + i;
+			sprites[i] = LoadSpriteByAnyName("frame" + frameNumber, "Frame " + frameNumber);
+		}
+
+		return sprites;
+	}
+
+	private bool HasAllSprites(Sprite[] sprites)
+	{
+		if (sprites == null || sprites.Length == 0)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < sprites.Length; i++)
+		{
+			if (sprites[i] == null)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private Sprite LoadSpriteByAnyName(params string[] spriteNames)
@@ -499,8 +651,62 @@ public class StartMenuManager : MonoBehaviour
 		nextButton = CreateTransparentButton(tutorialPanelObject.transform, "Tutorial Next", new Vector2(0.82f, 0.36f), new Vector2(0.97f, 0.62f));
 		nextButton.onClick.AddListener(NextTutorialPage);
 
-		understandButton = CreateTransparentButton(tutorialPanelObject.transform, "Tutorial Understand Or Continue", new Vector2(0.34f, 0.05f), new Vector2(0.66f, 0.23f));
+		understandButton = CreateTransparentButton(tutorialPanelObject.transform, "Tutorial Understand Or Continue", new Vector2(0.25f, 0.02f), new Vector2(0.75f, 0.28f));
 		understandButton.onClick.AddListener(OnUnderstandButtonClicked);
+	}
+
+	private void CreateStartMenuSpritePanelIfNeeded()
+	{
+		if (startPanelObject == null)
+		{
+			return;
+		}
+
+		Transform parent = startPanelObject.GetComponent<Canvas>() != null ? startPanelObject.transform : startPanelObject.transform.parent;
+		if (parent == null)
+		{
+			parent = startPanelObject.transform;
+		}
+
+		if (startMenuRuntimeObject == null)
+		{
+			Transform existing = parent.Find("Start Menu Sprite Runtime");
+			startMenuRuntimeObject = existing != null ? existing.gameObject : new GameObject("Start Menu Sprite Runtime", typeof(RectTransform), typeof(Image));
+			startMenuRuntimeObject.transform.SetParent(parent, false);
+		}
+
+		RectTransform menuRect = startMenuRuntimeObject.GetComponent<RectTransform>();
+		if (menuRect == null)
+		{
+			menuRect = startMenuRuntimeObject.AddComponent<RectTransform>();
+		}
+
+		ConfigureWorldPanelRect(menuRect);
+
+		startMenuImage = startMenuRuntimeObject.GetComponent<Image>();
+		if (startMenuImage == null)
+		{
+			startMenuImage = startMenuRuntimeObject.AddComponent<Image>();
+		}
+
+		startMenuImage.color = Color.white;
+		startMenuImage.raycastTarget = false;
+		startMenuImage.preserveAspect = true;
+
+		startMenuStartButton = EnsureTransparentButton(startMenuRuntimeObject.transform, "Start Sprite Button", new Vector2(0.34f, 0.25f), new Vector2(0.66f, 0.43f), OnStartButtonClicked);
+		startMenuInfoButton = EnsureTransparentButton(startMenuRuntimeObject.transform, "Start Info Button", new Vector2(0.44f, 0.78f), new Vector2(0.56f, 0.92f), ShowStartInfoFrame);
+		startMenuInfoTopButton = EnsureTransparentButton(startMenuRuntimeObject.transform, "Start Info Top Button", new Vector2(0.86f, 0.84f), new Vector2(0.98f, 0.98f), ShowStartInfoDetailFrame);
+
+		if (startMenuSprite != null)
+		{
+			RestoreStartMenuFrame();
+			HideStartPanelLegacyContent();
+		}
+		else
+		{
+			startMenuRuntimeObject.SetActive(false);
+			Debug.LogWarning("[StartMenuManager] Start menu sprite belum ditemukan. Tambahkan Frame 9.png ke Resources/TutorialFrames atau assign Start Menu Sprite di Inspector.");
+		}
 	}
 
 	private void ConfigureWorldPanelRect(RectTransform rectTransform)
@@ -548,6 +754,29 @@ public class StartMenuManager : MonoBehaviour
 		}
 
 		startPanelObject.SetActive(isActive);
+	}
+
+	private void HideStartPanelLegacyContent()
+	{
+		if (startPanelObject == null)
+		{
+			return;
+		}
+
+		foreach (Transform child in startPanelObject.transform)
+		{
+			if (startMenuRuntimeObject != null && child == startMenuRuntimeObject.transform)
+			{
+				continue;
+			}
+
+			if (tutorialPanelObject != null && child == tutorialPanelObject.transform)
+			{
+				continue;
+			}
+
+			child.gameObject.SetActive(false);
+		}
 	}
 
 	private void CacheTutorialReferences()
@@ -617,10 +846,82 @@ public class StartMenuManager : MonoBehaviour
 		Stretch(rectTransform, anchorMin, anchorMax);
 
 		Image image = buttonObject.GetComponent<Image>();
-		image.color = new Color(1f, 1f, 1f, 0f);
+		image.color = new Color(1f, 1f, 1f, 0.01f);
 		image.raycastTarget = true;
 
-		return buttonObject.GetComponent<Button>();
+		Button button = buttonObject.GetComponent<Button>();
+		button.targetGraphic = image;
+		return button;
+	}
+
+	private Button EnsureTransparentButton(Transform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax, UnityEngine.Events.UnityAction action)
+	{
+		Transform existing = parent.Find(objectName);
+		Button button;
+
+		if (existing == null)
+		{
+			button = CreateTransparentButton(parent, objectName, anchorMin, anchorMax);
+		}
+		else
+		{
+			button = existing.GetComponent<Button>();
+			if (button == null)
+			{
+				button = existing.gameObject.AddComponent<Button>();
+			}
+
+			RectTransform rectTransform = existing.GetComponent<RectTransform>();
+			if (rectTransform == null)
+			{
+				rectTransform = existing.gameObject.AddComponent<RectTransform>();
+			}
+
+			Stretch(rectTransform, anchorMin, anchorMax);
+
+			Image image = existing.GetComponent<Image>();
+			if (image == null)
+			{
+				image = existing.gameObject.AddComponent<Image>();
+			}
+
+			image.color = new Color(1f, 1f, 1f, 0.01f);
+			image.raycastTarget = true;
+			button.targetGraphic = image;
+		}
+
+		button.onClick.RemoveListener(action);
+		button.onClick.AddListener(action);
+		return button;
+	}
+
+	private void SetStartMenuSprite(Sprite sprite)
+	{
+		if (startMenuImage == null)
+		{
+			return;
+		}
+
+		startMenuImage.sprite = sprite != null ? sprite : startMenuSprite;
+		startMenuImage.enabled = startMenuImage.sprite != null;
+	}
+
+	private void SetStartMenuButtonsActive(bool startActive, bool infoActive, bool topInfoActive)
+	{
+		if (startMenuStartButton != null)
+		{
+			startMenuStartButton.gameObject.SetActive(startActive);
+		}
+
+		if (startMenuInfoButton != null)
+		{
+			startMenuInfoButton.gameObject.SetActive(infoActive);
+		}
+
+		if (startMenuInfoTopButton != null)
+		{
+			startMenuInfoTopButton.gameObject.SetActive(topInfoActive);
+		}
 	}
 
 	private void SetFallbackTextActive(bool isActive)
