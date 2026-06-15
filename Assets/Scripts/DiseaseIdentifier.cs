@@ -32,9 +32,9 @@ public class DiseaseIdentifier : MonoBehaviour
 
     [Header("Pengaturan Ukuran Panel")]
     // UKURAN DIGANDAKAN (DOUBLED)
-    public float feedbackPanelScale = 0.0155f; 
-    public float feedbackFontSize = 10f;      
-    public Vector2 feedbackPanelSize = new Vector2(160f, 120f);
+    public float feedbackPanelScale = 0.0125f; 
+    public float feedbackFontSize = 7f;      
+    public Vector2 feedbackPanelSize = new Vector2(80f, 60f);
 
     [Header("Efek Feedback")]
     public Volume feedbackBlurVolume;
@@ -57,6 +57,7 @@ public class DiseaseIdentifier : MonoBehaviour
     private Button feedbackCloseButton;
     private RectTransform feedbackCard;
     private Sprite correctTreatmentSprite;
+    private Sprite selfcareTreatmentSprite;
     private Sprite overTreatmentSprite;
     private Sprite criticalIgnoredSprite;
     private Sprite chooseTreatmentSprite;
@@ -244,9 +245,13 @@ public class DiseaseIdentifier : MonoBehaviour
             return;
         }
 
-        if (expectedChoice != TreatmentChoice.None && choice == expectedChoice)
+        if (expectedChoice != TreatmentChoice.None && choice == expectedChoice && choice == TreatmentChoice.Doctor)
         {
             ShowFeedbackSprite(correctTreatmentSprite);
+        }
+        else if ( choice == TreatmentChoice.SelfCare)
+        {
+            ShowFeedbackSprite(selfcareTreatmentSprite);
         }
         else
         {
@@ -297,7 +302,7 @@ public class DiseaseIdentifier : MonoBehaviour
 
         // === BUG FIX: Disable color transition to prevent raycast disappearance ===
         feedbackCloseButton.transition = Selectable.Transition.None;
-
+        
         feedbackCloseButton.onClick.RemoveListener(CloseFeedbackPanel);
         feedbackCloseButton.onClick.AddListener(CloseFeedbackPanel);
         feedbackCloseButton.targetGraphic = feedbackImage;
@@ -335,6 +340,7 @@ public class DiseaseIdentifier : MonoBehaviour
         criticalIgnoredSprite = LoadFeedbackSprite("Frame 3");
         chooseTreatmentSprite = LoadFeedbackSprite("Frame 12");
         wrongSymptomsSprite = LoadFeedbackSprite("Frame 13");
+        selfcareTreatmentSprite = LoadFeedbackSprite("Frame 14");
     }
 
     private Sprite LoadFeedbackSprite(string spriteName)

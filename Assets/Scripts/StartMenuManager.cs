@@ -10,6 +10,7 @@ public class StartMenuManager : MonoBehaviour
 	public CanvasGroup panelCanvasGroup;
 	public GameObject startPanelObject;
 	public GameObject tutorialPanelObject;
+	public GameObject healthbarCanvasObject; 
 
 	[Header("Tutorial PNG")]
 	[Tooltip("Isi dengan frame tutorial sebelum frame akhir. Frame terakhir di array akan memakai tombol Mengerti untuk pindah ke frame10.")]
@@ -91,6 +92,11 @@ void Start()
             // GameManager.Instance.currentState = GameManager.GameState.Paused; 
         }
         // ---------------------------
+
+		if (healthbarCanvasObject != null)
+        {
+            healthbarCanvasObject.SetActive(false); // Sembunyikan Healthbar
+        }
 
         foreach (var move in movementProviders)
         {
@@ -342,7 +348,7 @@ void Start()
 	IEnumerator TransitionRoutine()
 	{
 		Time.timeScale = 1f;
-		
+
 		if (GameManager.Instance != null)
 		{
 			GameManager.Instance.StartGame();
@@ -397,6 +403,11 @@ void Start()
 			}
 		}
 
+		if (healthbarCanvasObject != null)
+        {
+            healthbarCanvasObject.SetActive(true); // Munculkan Healthbar
+        }
+
 		Debug.Log("Game Started!");
 	}
 
@@ -407,7 +418,7 @@ void Start()
 			return;
 		}
 
-		Sprite[] explicitTutorialFrames = LoadSequentialTutorialFrames(4, 7);
+		Sprite[] explicitTutorialFrames = LoadSequentialTutorialFrames(4, 11);
 		if (HasAllSprites(explicitTutorialFrames))
 		{
 			tutorialFrameSprites = explicitTutorialFrames;
@@ -440,7 +451,7 @@ void Start()
 
 		if (finalTutorialSprite == null)
 		{
-			finalTutorialSprite = LoadSpriteByAnyName("frame10", "Frame 10");
+			finalTutorialSprite = LoadSpriteByAnyName("story", "Story");
 		}
 
 		if (tutorialFrameSprites != null && tutorialFrameSprites.Length > 0)
@@ -458,12 +469,12 @@ void Start()
 
 		if (startMenuSprite == null)
 		{
-			startMenuSprite = LoadSpriteByAnyName("frame9", "Frame 9");
+			startMenuSprite = LoadSpriteByAnyName("start", "Start");
 		}
 
 		if (startInfoSprite == null)
 		{
-			startInfoSprite = LoadSpriteByAnyName("frame11", "Frame 11");
+			startMenuSprite = LoadSpriteByAnyName("about", "About");
 		}
 
 		if (startInfoDetailSprite == null)
@@ -549,7 +560,7 @@ void Start()
 
 	private Sprite[] RemoveFinalFrameFromTutorialFrames(Sprite[] sprites)
 	{
-		int finalFrameNumber = ExtractFirstNumber(finalTutorialSprite != null ? finalTutorialSprite.name : "10");
+		int finalFrameNumber = ExtractFirstNumber(finalTutorialSprite != null ? finalTutorialSprite.name : "Story");
 		int count = 0;
 
 		for (int i = 0; i < sprites.Length; i++)
