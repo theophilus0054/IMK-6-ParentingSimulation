@@ -3588,28 +3588,28 @@ MonoBehaviour:
   diseaseElapsedTime: 0
   diseaseTimerUsesTimeScale: 0
   allowCommonColdProgression: 1
-  commonColdProgressionDelay: 50
+  commonColdProgressionDelay: 25
   pneumoniaProgressionChancePercent: 50
   diseaseProgressionChance: 0.1
   feverThreshold: 37.5
   lowOxygenThreshold: 40
   criticalHealthThreshold: 20
-  timeScale: 0.5
+  timeScale: 1
   commonColdHealthDecayRate: 0.4
   pneumoniaHealthDecayRate: 0.5
   healthDecayRate: 1
-  oxygenDecayRate: 0.8
+  oxygenDecayRate: 2
   commonColdDuration: 120
   pneumoniaDuration: 300
-  cc_pilek_duration: 20
-  cc_batuk_duration: 10
-  cc_cry_duration: 20
-  pn_pilek_duration: 20
-  pn_batuk_berdahak_duration: 10
-  pn_sesak_duration: 20
-  pn_demam_duration: 20
-  pn_cry_duration: 20
-  initialRestDuration: 10
+  cc_pilek_duration: 10
+  cc_batuk_duration: 5
+  cc_cry_duration: 10
+  pn_pilek_duration: 10
+  pn_batuk_berdahak_duration: 5
+  pn_sesak_duration: 10
+  pn_demam_duration: 10
+  pn_cry_duration: 10
+  initialRestDuration: 0
   autoInfectCommonColdAfterRest: 1
   commonColdChancePerSecondPercent: 10
   diseaseChancePerSecond: 0.001
@@ -13846,7 +13846,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
     m_HighlightedColor: {r: 0.6273585, g: 0.736959, b: 1, a: 0.19215687}
     m_PressedColor: {r: 0, g: 0.17717361, b: 1, a: 0}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -17206,7 +17206,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
     m_HighlightedColor: {r: 0.6273585, g: 0.736959, b: 1, a: 0.19215687}
     m_PressedColor: {r: 0, g: 0.17717361, b: 1, a: 0}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -17513,7 +17513,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
     m_HighlightedColor: {r: 0.6273585, g: 0.736959, b: 1, a: 0.19215687}
     m_PressedColor: {r: 0, g: 0.17717361, b: 1, a: 0}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -23326,8 +23326,8 @@ MonoBehaviour:
   tutorialFrameSprites: []
   finalTutorialSprite: {fileID: 0}
   tutorialResourcesFolder: TutorialFrames
-  startMenuSprite: {fileID: 21300000, guid: fa73550d9435e174291140065c55f24e, type: 3}
-  startInfoSprite: {fileID: 21300000, guid: 2a4ad6b170fe0714b98372b90d1ccee8, type: 3}
+  startMenuSprite: {fileID: 0}
+  startInfoSprite: {fileID: 0}
   startInfoDetailSprite: {fileID: 0}
   blurVolume: {fileID: 1549841933}
   movementProviders:

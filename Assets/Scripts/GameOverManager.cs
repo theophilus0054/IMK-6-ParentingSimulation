@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
+using System.Diagnostics; // Required for the full restart process
+using System.IO;
 
 public class GameOverManager : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("UI (Sprite Renderer Object)")]
     [SerializeField] private GameObject gameOverPanel;
 
     [Header("Blur / Global Volume")]
@@ -12,10 +13,10 @@ public class GameOverManager : MonoBehaviour
 
     [Header("Posisi Panel")]
     [SerializeField] private Transform playerCamera;
-    [SerializeField] private float panelDistance = 1.5f;
+    [SerializeField] private float panelDistance = 1.0f; // Kept slightly closer (1 meter) so it doesn't clip into walls
     [SerializeField] private Vector3 panelOffset = new Vector3(0f, -0.1f, 0f);
 
-    [Header("Optional: objek yang ingin dimatikan saat game over")]
+    [Header("Objek yang wajib dimatikan saat game over")]
     [SerializeField] private MonoBehaviour[] disableScripts;
     [SerializeField] private GameObject[] hideObjects;
 
@@ -44,21 +45,21 @@ public class GameOverManager : MonoBehaviour
         if (isGameOver) return;
         isGameOver = true;
 
-        // Aktifkan blur
+        // 1. Enable VR Blur/Post-Processing
         if (globalVolume != null)
         {
             globalVolume.enabled = true;
             globalVolume.weight = 1f;
         }
 
-        // Tampilkan panel game over
+        // 2. Position and display the Sprite Panel
         if (gameOverPanel != null)
         {
-            PlacePanelInFrontOfPlayer(gameOverPanel);
+            PlaceSpriteInFrontOfPlayer(gameOverPanel);
             gameOverPanel.SetActive(true);
         }
 
-        // Nonaktifkan gameplay jika perlu
+        // 3. Disable gameplay scripts (movement, shooting, enemies) instead of freezing time
         if (disableScripts != null)
         {
             foreach (var s in disableScripts)
@@ -71,42 +72,10 @@ public class GameOverManager : MonoBehaviour
                 if (go != null) go.SetActive(false);
         }
 
-        // Pause game
-        Time.timeScale = 0f;
+        // REMOVED Time.timeScale = 0f; to keep VR tracking and physical button raycasts working smoothly!
     }
 
-    public void ReturnToGame()
-    {
-        if (!isGameOver) return;
-
-        isGameOver = false;
-
-        // Hilangkan panel
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(false);
-
-        // Matikan blur
-        if (globalVolume != null)
-            globalVolume.weight = 0f;
-
-        // Aktifkan lagi script gameplay
-        if (disableScripts != null)
-        {
-            foreach (var s in disableScripts)
-                if (s != null) s.enabled = true;
-        }
-
-        if (hideObjects != null)
-        {
-            foreach (var go in hideObjects)
-                if (go != null) go.SetActive(true);
-        }
-
-        // Lanjut game
-        Time.timeScale = 1f;
-    }
-
-    private void PlacePanelInFrontOfPlayer(GameObject panel)
+    private void PlaceSpriteInFrontOfPlayer(GameObject panel)
     {
         Transform cameraTransform = playerCamera;
 
@@ -115,19 +84,46 @@ public class GameOverManager : MonoBehaviour
             cameraTransform = Camera.main.transform;
         }
 
-        if (panel == null || cameraTransform == null)
+        if (panel == null || cameraTransform == null) return;
+
+        // Calculate position based on where the player is looking
+        Vector3 panelPosition = cameraTransform.position + cameraTransform.forward * panelDistance + cameraTransform.TransformVector(panelOffset);
+        panel.transform.position = panelPosition;
+
+        // FIXED FOR SPRITES: Force the flat sprite to look directly at the player's eyes
+        panel.transform.LookAt(cameraTransform);
+        
+        // Flip 180 degrees because Unity Sprites inherently face backwards when using LookAt
+        panel.transform.Rotate(0, 180f, 0); 
+    }
+
+    /// <summary>
+    /// This replaces your old RestartScene logic. It hard-restarts the whole app executable.
+    /// Connect your panel's button click event to this function.
+    /// </summary>
+    public void RestartGameEntirely()
+    {
+        // If testing in the Unity Editor, just reload the scene so it doesn't close Unity
+        if (Application.isEditor)
         {
+            UnityEngine.Debug.LogWarning("Editor detected: Reloading scene instead of full app restart.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
             return;
         }
 
-        Vector3 panelPosition = cameraTransform.position + cameraTransform.forward * panelDistance + cameraTransform.TransformVector(panelOffset);
-        panel.transform.position = panelPosition;
-        panel.transform.rotation = Quaternion.LookRotation(panelPosition - cameraTransform.position, Vector3.up);
-    }
+        try
+        {
+            // Get path to the build .exe file and launch a brand new instance
+            string currentExePath = Process.GetCurrentProcess().MainModule.FileName;
+            Process.Start(currentExePath);
+        }
+        catch (System.Exception e)
+        {
+            UnityEngine.Debug.LogError($"Failed to restart game executable: {e.Message}");
+            return;
+        }
 
-    public void RestartScene()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        // Kill this current frozen instance completely
+        Application.Quit();
     }
 }
