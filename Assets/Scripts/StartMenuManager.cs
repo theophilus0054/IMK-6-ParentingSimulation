@@ -76,17 +76,29 @@ public class StartMenuManager : MonoBehaviour
 		get { return LastTutorialIndex; }
 	}
 
-	void Start()
-	{
-		Debug.Log("TESTING: Fungsi Start GameManager Berhasil Dipanggil!");
+void Start()
+    {
+        Debug.Log("TESTING: Fungsi Start GameManager Berhasil Dipanggil!");
 
-		foreach (var move in movementProviders)
-		{
-			if (move != null)
-			{
-				move.enabled = false;
-			}
-		}
+        // --- TAMBAHKAN BARIS INI ---
+        // Hentikan waktu game di latar belakang
+        Time.timeScale = 0f; 
+        
+        // Pastikan state GameManager tidak Playing (misalnya Paused)
+        if (GameManager.Instance != null)
+        {
+            // Sesuaikan dengan nama state pause di GameManager-mu
+            // GameManager.Instance.currentState = GameManager.GameState.Paused; 
+        }
+        // ---------------------------
+
+        foreach (var move in movementProviders)
+        {
+            if (move != null)
+            {
+                move.enabled = false;
+            }
+        }
 
 		if (blurVolume != null)
 		{
@@ -329,6 +341,8 @@ public class StartMenuManager : MonoBehaviour
 
 	IEnumerator TransitionRoutine()
 	{
+		Time.timeScale = 1f;
+		
 		if (GameManager.Instance != null)
 		{
 			GameManager.Instance.StartGame();
