@@ -98,6 +98,19 @@ public class VRGameRestarter : MonoBehaviour
         if (Application.isEditor)
         {
             UnityEngine.Debug.LogWarning("Unity Editor: Reloading scene instead of closing app.");
+            
+            // Bersihkan semua object DontDestroyOnLoad agar tidak ada reference yang missing
+            // menggunakan DestroyImmediate agar object langsung terhapus sebelum scene baru di-load,
+            // sehingga Singleton baru tidak mendeteksi duplikat dan menghancurkan dirinya sendiri.
+            GameObject[] allObjects = FindObjectsOfType<GameObject>();
+            foreach (GameObject go in allObjects)
+            {
+                if (go.transform.parent == null && go.scene.name == "DontDestroyOnLoad")
+                {
+                    DestroyImmediate(go);
+                }
+            }
+
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
             return;
         }

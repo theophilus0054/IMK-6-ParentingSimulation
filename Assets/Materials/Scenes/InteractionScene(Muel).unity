@@ -30378,7 +30378,6 @@ GameObject:
   - component: {fileID: 1874009007}
   - component: {fileID: 1874009006}
   - component: {fileID: 1874009009}
-  - component: {fileID: 1874009010}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -30471,20 +30470,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RaycastTriggerInteraction: 1
---- !u!114 &1874009010
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1874009004}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19e0bd5f879f8954baed0fb090f49f05, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BookPageUIManager
-  bookScript: {fileID: 0}
-  pagePanels: []
 --- !u!1 &1874721883
 GameObject:
   m_ObjectHideFlags: 0
@@ -30676,7 +30661,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -63012,7 +62997,6 @@ GameObject:
   - component: {fileID: 4096623696893263272}
   - component: {fileID: 5839998302148702325}
   - component: {fileID: 5839998302148702326}
-  - component: {fileID: 5839998302148702331}
   - component: {fileID: 5839998302148702330}
   - component: {fileID: 5839998302148702329}
   - component: {fileID: 5839998302148702328}
@@ -63203,7 +63187,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -63256,18 +63240,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &5839998302148702331
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5839998302148702324}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29176dac5cb8c1d429a899ca92af8e0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BabyDisease
 --- !u!33 &5855673143826446449
 MeshFilter:
   m_ObjectHideFlags: 0
